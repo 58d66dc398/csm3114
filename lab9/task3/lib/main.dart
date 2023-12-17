@@ -32,6 +32,7 @@ class MyMainUI extends StatefulWidget {
 }
 
 class _MyMainUIState extends State<MyMainUI> {
+  final _key = GlobalKey<FormFieldState>();
   late FocusNode currentFocus;
 
   // late TextEditingController myController;
@@ -66,33 +67,45 @@ class _MyMainUIState extends State<MyMainUI> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             const SizedBox(height: 64),
-            TextField(
+            TextFormField(
+              key: _key,
               controller: firstController,
               // onChanged: (value) => // it is abusing my CPU
               //     print('# Debug : first field value update $value'),
               decoration: const InputDecoration(
-                  // hintText: 'auto focus is set',
-                  // labelText: 'Number',
-                  // hintText: 'Student Number',
-                  labelText: 'Plate Number',
-                  hintText: 'Car Plate Number',
+                // hintText: 'auto focus is set',
+                  labelText: 'Number',
+                  hintText: 'Student Number',
+                  // labelText: 'Plate Number',
+                  // hintText: 'Car Plate Number',
                   prefixIcon: Icon(Icons.onetwothree),
                   enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(width: 2, color: Colors.blue))),
               autofocus: true,
               focusNode: currentFocus,
+              validator: (value) {
+                String? error;
+                if (value == null) {
+                  error = 'first input is null';
+                } else if (value.contains(' ')) {
+                  error = 'no space in student number';
+                }
+                print('# Debug : main.dart -> $error');
+                return error;
+              },
             ),
             const SizedBox(height: 8),
             TextField(
               // controller: myController,
               controller: secondController,
               decoration: const InputDecoration(
-                  // hintText: 'current focus is trigger',
-                  // labelText: 'Name',
-                  // hintText: 'Full Name',
-                  labelText: 'Model',
-                  hintText: 'Car Model',
-                  prefixIcon: Icon(Icons.directions_car),
+                // hintText: 'current focus is trigger',
+                  labelText: 'Name',
+                  hintText: 'Full Name',
+                  prefixIcon: Icon(Icons.person),
+                  // labelText: 'Model',
+                  // hintText: 'Car Model',
+                  // prefixIcon: Icon(Icons.directions_car),
                   enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(width: 2, color: Colors.blue))),
             ),
@@ -104,30 +117,36 @@ class _MyMainUIState extends State<MyMainUI> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Car Info'),
-              content: SingleChildScrollView(
-                child: ListBody(
-                  children: [
-                    Text('Car Plate Number: ${firstController.text}'),
-                    Text('Car Model: ${secondController.text}'),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      firstController.text = '';
-                      secondController.text = '';
-                      currentFocus.requestFocus();
-                    },
-                    child: const Text('Close')),
-              ],
-            ),
-          );
+          if (_key.currentState!.validate()) {
+            showDialog(
+              context: context,
+              builder: (context) =>
+                  AlertDialog(
+                    // title: const Text('Car Info'),
+                    title: const Text('Student Info'),
+                    content: SingleChildScrollView(
+                      child: ListBody(
+                        children: [
+                          // Text('Car Plate Number: ${firstController.text}'),
+                          // Text('Car Model: ${secondController.text}'),
+                          Text('Student Number: ${firstController.text}'),
+                          Text('Name: ${secondController.text}'),
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            firstController.text = '';
+                            secondController.text = '';
+                            currentFocus.requestFocus();
+                          },
+                          child: const Text('Close')),
+                    ],
+                  ),
+            );
+          }
         },
         tooltip: 'click to send form',
         child: const Icon(Icons.send),
