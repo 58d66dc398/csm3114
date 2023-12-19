@@ -18,9 +18,9 @@ class AddItemPage extends StatefulWidget {
 }
 
 class _AddItemPageState extends State<AddItemPage> {
-  String? name;
-  int? quantity;
-  Category? category;
+  String? _name;
+  int? _quantity;
+  Category? _category;
 
   final _formKey = GlobalKey<FormState>();
 
@@ -29,13 +29,13 @@ class _AddItemPageState extends State<AddItemPage> {
       _formKey.currentState!.save();
       Item item = Item(
         id: items.length.toString(),
-        name: name!,
-        quantity: quantity!,
-        category: category!,
+        name: _name!,
+        quantity: _quantity!,
+        category: _category!,
       );
-      items.add(item);
-      widget.refreshParent();
-      Navigator.pop(context);
+      // items.add(item);
+      // widget.refreshParent();
+      Navigator.pop(context, item);
     }
   }
 
@@ -57,12 +57,12 @@ class _AddItemPageState extends State<AddItemPage> {
                 decoration: const InputDecoration(labelText: 'Name'),
                 validator: (value) => (value == null ||
                         value.isEmpty ||
-                        value.trim().length <= 1 ||
+                        // value.trim().length <= 1 ||
                         value.trim().length > 50)
                     ? 'Must be between 1 and 50 characters.'
                     : null,
                 onSaved: (value) {
-                  name = value;
+                  _name = value;
                 },
               ),
               Row(
@@ -83,7 +83,7 @@ class _AddItemPageState extends State<AddItemPage> {
                           ? 'Must be a valid, positive number.'
                           : null,
                       onSaved: (value) {
-                        quantity = int.tryParse(value!);
+                        _quantity = int.tryParse(value!);
                       },
                     ),
                   ),
@@ -107,8 +107,13 @@ class _AddItemPageState extends State<AddItemPage> {
                               ))
                       ],
                       decoration: const InputDecoration(hintText: 'Category'),
+                      validator: (value) {
+                        return (value == null)
+                            ? 'You forgot about category'
+                            : null;
+                      },
                       onChanged: (value) {
-                        category = value;
+                        _category = value;
                       },
                     ),
                   ),

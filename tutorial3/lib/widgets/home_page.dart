@@ -13,11 +13,21 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  void _addItemPage() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (ctx) => AddItemPage(refreshParent: refresh)));
+  Future<void> _addItemPage() async {
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (ctx) => AddItemPage(refreshParent: refresh)),
+    // );
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (ctx) => AddItemPage(refreshParent: refresh)),
+    ).then((value) {
+      if (value != null) {
+        setState(() {
+          items.add(value);
+        });
+      }
+    });
   }
 
   void refresh() => setState(() {});
@@ -35,8 +45,14 @@ class _HomePageState extends State<HomePage> {
       body: ListView.builder(
         itemCount: items.length,
         itemBuilder: (context, index) => ListTile(
-          leading: Container(
-              width: 32, height: 32, color: items[index].category.color),
+          leading: Tooltip(
+            message: items[index].category.title,
+            child: Container(
+              width: 32,
+              height: 32,
+              color: items[index].category.color,
+            ),
+          ),
           title: Text(items[index].name),
           trailing: Text(
             items[index].quantity.toString(),
