@@ -27,6 +27,8 @@ class _ViewTasksState extends State<ViewTasks> {
 
   @override
   Widget build(BuildContext context) {
+    ThemeData theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Tasks'),
@@ -37,22 +39,40 @@ class _ViewTasksState extends State<ViewTasks> {
         itemBuilder: (BuildContext context, int i) {
           return InkWell(
             onTap: () {},
-            child: ListTile(
-              enabled: !tasks[i].done,
-              leading: Checkbox(
-                value: tasks[i].done,
-                onChanged: (bool? value) {
-                  setState(() {
-                    tasks[i].done = value ?? false;
-                  });
-                },
+            child: Dismissible(
+              key: GlobalKey(),
+              confirmDismiss: (direction) async => false,
+              background: Container(
+                color: Colors.blue,
+                padding: const EdgeInsets.all(20),
+                child: const FittedBox(
+                  alignment: Alignment.centerLeft,
+                  child: Icon(Icons.star),
+                ),
               ),
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              title: Text(tasks[i].title),
-              subtitle: (tasks[i].deadline != null)
-                  ? Text(df.format(tasks[i].deadline!.toLocal()))
-                  : null,
+              secondaryBackground: Container(
+                color: Colors.red,
+                padding: const EdgeInsets.all(20),
+                child: const FittedBox(
+                  alignment: Alignment.centerRight,
+                  child: Icon(Icons.delete),
+                ),
+              ),
+              child: ListTile(
+                tileColor: theme.colorScheme.background,
+                enabled: !tasks[i].done,
+                leading: Checkbox(
+                  value: tasks[i].done,
+                  onChanged: (bool? value) =>
+                      setState(() => tasks[i].done = value!),
+                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                title: Text(tasks[i].title),
+                subtitle: (tasks[i].deadline != null)
+                    ? Text(df.format(tasks[i].deadline!.toLocal()))
+                    : null,
+              ),
             ),
           );
         },
@@ -62,7 +82,7 @@ class _ViewTasksState extends State<ViewTasks> {
           await showModalBottomSheet(
             isScrollControlled: true,
             context: context,
-            builder: (context) => PartAddTask(),
+            builder: (context) => const PartAddTask(),
           ).then((task) => setState(() => tasks.add(task)));
         },
         child: const Icon(Icons.add),
