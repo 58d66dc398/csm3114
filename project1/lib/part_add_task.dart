@@ -1,11 +1,15 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:what_todo/part_datetime_picker.dart';
+import 'package:what_todo/view_edit_task.dart';
 
 import 'model_task.dart';
 
 class PartAddTask extends StatefulWidget {
-  const PartAddTask({super.key});
+  const PartAddTask(this.refreshParent, {super.key});
+
+  final Function refreshParent;
 
   @override
   State<StatefulWidget> createState() {
@@ -17,20 +21,25 @@ class _PartAddTaskState extends State<PartAddTask> {
   final GlobalKey<FormFieldState> _key = GlobalKey();
 
   String title = '';
-  DateTime? pickedDate;
-  TimeOfDay? pickedTime;
+  DateTime? deadline;
 
-  DateTime? getDateTime() {
-    if (pickedDate != null || pickedTime != null) {
-      DateTime date = pickedDate ?? DateTime.now();
-      TimeOfDay time = pickedTime ?? const TimeOfDay(hour: 0, minute: 0);
-      return DateTime(date.year, date.month, date.day, time.hour, time.minute);
-    }
-    return null;
+  DateTime? getDeadline() => deadline;
+
+  void setDeadline(DateTime? dateTime) {
+    deadline = dateTime;
+  }
+
+  Task createTask() {
+    return Task(
+      created: DateTime.now(),
+      title: title,
+      deadline: deadline,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final NavigatorState navigator = Navigator.of(context);
     final MediaQueryData mediaQuery = MediaQuery.of(context);
     final double keyboardPadding = max(mediaQuery.viewInsets.bottom - 24, 0);
 
@@ -41,7 +50,6 @@ class _PartAddTaskState extends State<PartAddTask> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            const Text('New Task'),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: TextFormField(
@@ -57,42 +65,31 @@ class _PartAddTaskState extends State<PartAddTask> {
             const SizedBox(height: 8),
             Row(
               children: <Widget>[
+                PartDateTimePicker(getDeadline, setDeadline),
                 IconButton(
                   onPressed: () {
-                    final DateTime now = DateTime.now();
-                    showDatePicker(
-                      context: context,
-                      initialDate: pickedDate ?? now,
-                      firstDate: now,
-                      lastDate: now.copyWith(year: now.year + 1),
-                    ).then((date) => setState(() => pickedDate = date));
+                    if (_key.currentState!.validate()) {
+                      _key.currentState!.save();
+                      Task task = createTask();
+                      navigator.pop(task);
+                      navigator.push(
+                        MaterialPageRoute(
+                          builder: (_) => ViewEditTask(
+                            refreshParent: widget.refreshParent,
+                            task: task,
+                          ),
+                        ),
+                      );
+                    }
                   },
-                  icon: Icon(
-                    Icons.calendar_month,
-                    color: (pickedDate != null) ? Colors.blue : null,
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay.now(),
-                  ).then((time) => setState(() => pickedTime = time)),
-                  icon: Icon(
-                    Icons.access_time,
-                    color: (pickedTime != null) ? Colors.green : null,
-                  ),
+                  icon: const Icon(Icons.notes),
                 ),
                 const Spacer(),
                 TextButton(
                   onPressed: () {
                     if (_key.currentState!.validate()) {
                       _key.currentState!.save();
-                      Task newTask = Task(
-                        created: DateTime.now(),
-                        title: title,
-                        deadline: getDateTime(),
-                      );
-                      return Navigator.pop(context, newTask);
+                      return navigator.pop(createTask());
                     }
                   },
                   child: const Text('Add'),
