@@ -2,13 +2,10 @@
 
 Yet another to-do app.
 
-## goals
+## housekeeping
 
-1. a functional to-do app
-   - add, delete edit to-do
-2. anonymous social feed
-   - camera support for to-do
-   - create, delete user 
-   - publish, hide to-do
-   - upvote to-do, track user upvote
-   - ranking
+for file naming conventions (in `/lib`):
+
+- `view_*.dart` for a full page (with scaffold)
+- `part_*.dart` for widget component used in page(s)
+- `model_*.dart` for defined object classes
