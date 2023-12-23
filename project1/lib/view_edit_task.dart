@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:what_todo/part_datetime_picker.dart';
 
 import 'model_task.dart';
@@ -20,7 +21,9 @@ class ViewEditTask extends StatefulWidget {
 }
 
 class _ViewEditTaskState extends State<ViewEditTask> {
+  final DateFormat df = DateFormat("yyyy/MM/dd HH:mm");
   final GlobalKey<FormState> _key = GlobalKey<FormState>();
+  List<Widget> partDeadline = <Widget>[];
 
   void updateTask() {
     if (_key.currentState!.validate()) {
@@ -34,6 +37,12 @@ class _ViewEditTaskState extends State<ViewEditTask> {
   void setDeadline(DateTime? date) {
     setState(() {
       widget.task.deadline = date;
+      partDeadline = (widget.task.deadline != null)
+          ? <Widget>[
+              const SizedBox(width: 8),
+              Text(df.format(widget.task.deadline!)),
+            ]
+          : <Widget>[];
     });
   }
 
@@ -82,8 +91,7 @@ class _ViewEditTaskState extends State<ViewEditTask> {
                 child: Row(
                   children: [
                     PartDateTimePicker(getDeadline, setDeadline),
-                    const SizedBox(width: 8),
-                    Text(task.deadline?.toString() ?? ''),
+                    ...partDeadline,
                   ],
                 ),
               ),

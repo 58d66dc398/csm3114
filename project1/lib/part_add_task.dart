@@ -31,7 +31,6 @@ class _PartAddTaskState extends State<PartAddTask> {
 
   Task createTask() {
     return Task(
-      created: DateTime.now(),
       title: title,
       deadline: deadline,
     );
