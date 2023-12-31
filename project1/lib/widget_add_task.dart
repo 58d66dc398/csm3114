@@ -1,23 +1,23 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:what_todo/part_datetime_picker.dart';
+import 'package:what_todo/widget_set_datetime.dart';
 import 'package:what_todo/view_edit_task.dart';
 
 import 'model_task.dart';
 
-class PartAddTask extends StatefulWidget {
-  const PartAddTask(this.refreshParent, {super.key});
+class AddTaskView extends StatefulWidget {
+  const AddTaskView(this.refreshParent, {super.key});
 
   final Function refreshParent;
 
   @override
   State<StatefulWidget> createState() {
-    return _PartAddTaskState();
+    return _AddTaskViewState();
   }
 }
 
-class _PartAddTaskState extends State<PartAddTask> {
+class _AddTaskViewState extends State<AddTaskView> {
   final GlobalKey<FormFieldState> _key = GlobalKey();
 
   String title = '';
@@ -64,7 +64,7 @@ class _PartAddTaskState extends State<PartAddTask> {
             const SizedBox(height: 8),
             Row(
               children: <Widget>[
-                PartDateTimePicker(getDeadline, setDeadline),
+                DateTimePickerView(getDeadline, setDeadline),
                 IconButton(
                   onPressed: () {
                     if (_key.currentState!.validate()) {
@@ -73,7 +73,7 @@ class _PartAddTaskState extends State<PartAddTask> {
                       navigator.pop(task);
                       navigator.push(
                         MaterialPageRoute(
-                          builder: (_) => ViewEditTask(
+                          builder: (_) => EditTaskPage(
                             refreshParent: widget.refreshParent,
                             task: task,
                           ),

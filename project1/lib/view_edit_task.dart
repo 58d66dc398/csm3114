@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:what_todo/part_datetime_picker.dart';
+import 'package:what_todo/widget_set_datetime.dart';
 
 import 'model_task.dart';
 
-class ViewEditTask extends StatefulWidget {
+class EditTaskPage extends StatefulWidget {
   final Function refreshParent;
   final Task task;
 
-  const ViewEditTask({
+  const EditTaskPage({
     super.key,
     required this.task,
     required this.refreshParent,
@@ -16,11 +16,11 @@ class ViewEditTask extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() {
-    return _ViewEditTaskState();
+    return _EditTaskPageState();
   }
 }
 
-class _ViewEditTaskState extends State<ViewEditTask> {
+class _EditTaskPageState extends State<EditTaskPage> {
   final DateFormat df = DateFormat("yyyy/MM/dd HH:mm");
   final GlobalKey<FormState> _key = GlobalKey<FormState>();
   List<Widget> partDeadline = <Widget>[];
@@ -28,6 +28,7 @@ class _ViewEditTaskState extends State<ViewEditTask> {
   void updateTask() {
     if (_key.currentState!.validate()) {
       _key.currentState!.save();
+      Task.sortAll();
       widget.refreshParent();
     }
   }
@@ -37,12 +38,7 @@ class _ViewEditTaskState extends State<ViewEditTask> {
   void setDeadline(DateTime? date) {
     setState(() {
       widget.task.deadline = date;
-      partDeadline = (widget.task.deadline != null)
-          ? <Widget>[
-              const SizedBox(width: 8),
-              Text(df.format(widget.task.deadline!)),
-            ]
-          : <Widget>[];
+      updateTask();
     });
   }
 
@@ -50,6 +46,7 @@ class _ViewEditTaskState extends State<ViewEditTask> {
   Widget build(BuildContext context) {
     final navigator = Navigator.of(context);
     final Task task = widget.task;
+    final DateTime? deadline = widget.task.deadline;
 
     return Scaffold(
       appBar: AppBar(
@@ -57,10 +54,10 @@ class _ViewEditTaskState extends State<ViewEditTask> {
         centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () => setState(() => task.priority = !task.priority),
+            onPressed: () => setState(() => Task.toggleStar(task)),
             icon: Icon(
               Icons.star,
-              color: (task.priority) ? Colors.yellow : null,
+              color: (Task.star.contains(task)) ? Colors.yellow : null,
             ),
           ),
           IconButton(
@@ -90,8 +87,9 @@ class _ViewEditTaskState extends State<ViewEditTask> {
                 padding: const EdgeInsets.only(top: 16),
                 child: Row(
                   children: [
-                    PartDateTimePicker(getDeadline, setDeadline),
-                    ...partDeadline,
+                    DateTimePickerView(getDeadline, setDeadline),
+                    const SizedBox(width: 8),
+                    Text((deadline != null) ? df.format(deadline) : ''),
                   ],
                 ),
               ),
@@ -102,7 +100,7 @@ class _ViewEditTaskState extends State<ViewEditTask> {
                     initialValue: task.details,
                     maxLines: null,
                     keyboardType: TextInputType.multiline,
-                    onSaved: (value) => task.details = value,
+                    onSaved: (value) => task.details = value!,
                   ))
             ],
           ),

@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 import '../data/categories.dart';
 import '../data/dummy_items.dart';
@@ -24,18 +27,36 @@ class _AddItemPageState extends State<AddItemPage> {
 
   final _formKey = GlobalKey<FormState>();
 
-  void _addItem() {
+  void _addItem() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
-      Item item = Item(
-        id: items.length.toString(),
-        name: _name!,
-        quantity: _quantity!,
-        category: _category!,
+      final url = Uri.https(
+        'c3114t3-default-rtdb.asia-southeast1.firebasedatabase.app',
+        'data.json',
       );
+      await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'name': _name,
+          'quantity': _quantity,
+          'category': _category!.title,
+        }),
+      );
+      // Item item = Item(
+      //   id: items.length.toString(),
+      //   name: _name!,
+      //   quantity: _quantity!,
+      //   category: _category!,
+      // );
       // items.add(item);
       // widget.refreshParent();
-      Navigator.pop(context, item);
+      // Navigator.pop(context, item);
+      if (context.mounted) {
+        Navigator.pop(context);
+      }
     }
   }
 

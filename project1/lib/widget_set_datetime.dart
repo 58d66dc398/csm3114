@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-class PartDateTimePicker extends StatefulWidget {
+class DateTimePickerView extends StatefulWidget {
   final Function getPicked, setPicked;
 
-  const PartDateTimePicker(this.getPicked, this.setPicked, {super.key});
+  const DateTimePickerView(this.getPicked, this.setPicked, {super.key});
 
   @override
   State<StatefulWidget> createState() {
-    return _PartDateTimePickerState();
+    return _DateTimePickerViewState();
   }
 }
 
-class _PartDateTimePickerState extends State<PartDateTimePicker> {
+class _DateTimePickerViewState extends State<DateTimePickerView> {
   @override
   Widget build(BuildContext context) {
     return IconButton(
