@@ -1,15 +1,13 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:what_todo/widget_set_datetime.dart';
 import 'package:what_todo/view_edit_task.dart';
+import 'package:what_todo/widget_set_datetime.dart';
 
 import 'model_task.dart';
 
 class AddTaskView extends StatefulWidget {
-  const AddTaskView(this.refreshParent, {super.key});
-
-  final Function refreshParent;
+  const AddTaskView({super.key});
 
   @override
   State<StatefulWidget> createState() {
@@ -73,10 +71,7 @@ class _AddTaskViewState extends State<AddTaskView> {
                       navigator.pop(task);
                       navigator.push(
                         MaterialPageRoute(
-                          builder: (_) => EditTaskPage(
-                            refreshParent: widget.refreshParent,
-                            task: task,
-                          ),
+                          builder: (_) => EditTaskPage(task: task),
                         ),
                       );
                     }

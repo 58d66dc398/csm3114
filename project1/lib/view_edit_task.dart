@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:what_todo/widget_set_datetime.dart';
 
 import 'model_task.dart';
 
 class EditTaskPage extends StatefulWidget {
-  final Function refreshParent;
+  final Function? refreshParent;
   final Task task;
 
   const EditTaskPage({
     super.key,
     required this.task,
-    required this.refreshParent,
+    this.refreshParent,
   });
 
   @override
@@ -29,7 +30,9 @@ class _EditTaskPageState extends State<EditTaskPage> {
     if (_key.currentState!.validate()) {
       _key.currentState!.save();
       Task.sortAll();
-      widget.refreshParent();
+      if (widget.refreshParent != null) {
+        widget.refreshParent!();
+      }
     }
   }
 
@@ -44,7 +47,9 @@ class _EditTaskPageState extends State<EditTaskPage> {
 
   @override
   Widget build(BuildContext context) {
-    final navigator = Navigator.of(context);
+    final ThemeData theme = Theme.of(context);
+    final NavigatorState navigator = Navigator.of(context);
+
     final Task task = widget.task;
     final DateTime? deadline = widget.task.deadline;
 
@@ -52,9 +57,12 @@ class _EditTaskPageState extends State<EditTaskPage> {
       appBar: AppBar(
         title: const Text('Task'),
         centerTitle: true,
+        systemOverlayStyle: SystemUiOverlayStyle(
+          systemNavigationBarColor: theme.scaffoldBackgroundColor,
+        ),
         actions: [
           IconButton(
-            onPressed: () => setState(() => Task.toggleStar(task)),
+            onPressed: () => setState(() => task.toggleStar()),
             icon: Icon(
               Icons.star,
               color: (Task.star.contains(task)) ? Colors.yellow : null,

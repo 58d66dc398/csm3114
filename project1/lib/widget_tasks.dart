@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:what_todo/utils.dart';
 import 'package:what_todo/view_edit_task.dart';
 
 import 'model_task.dart';
@@ -20,44 +21,24 @@ class TasksViewState extends State<TasksView> {
 
   void refresh() => setState(() {});
 
+  void _snackRemove(void Function() onUndo) {
+    ScaffoldMessengerState state = ScaffoldMessenger.of(context);
+    String message = 'Deleted Task';
+    snackUndo(state, message, () => setState(onUndo));
+  }
+
   void removeTodo(int index) {
-    setState(() {
-      Task cache = todos.removeAt(index);
-      bool wasStarred = star.contains(cache);
-      int starredIndex = 0;
-      if (wasStarred) {
-        starredIndex = star.indexOf(cache);
-        star.remove(cache);
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Deleted Task'),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () => setState(() {
-              todos.insert(index, cache);
-              if (wasStarred) {
-                star.insert(starredIndex, cache);
-              }
-            }),
-          ),
-        ),
-      );
-    });
+    Task cache = todos[index];
+    int starIndex = (star.contains(cache)) ? star.indexOf(cache) : -1;
+
+    setState(() => Task.removeTodo(cache));
+    _snackRemove(() => Task.insertTodo(index, cache, starIndex: starIndex));
   }
 
   void removeDone(int index) {
     setState(() {
       Task cache = done.removeAt(index);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Deleted Task'),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () => setState(() => done.insert(index, cache)),
-          ),
-        ),
-      );
+      _snackRemove(() => done.insert(index, cache));
     });
   }
 
@@ -107,7 +88,7 @@ class TasksViewState extends State<TasksView> {
                   key: UniqueKey(),
                   confirmDismiss: (direction) async {
                     if (direction == DismissDirection.startToEnd) {
-                      bool starred = Task.toggleStar(todos[i]);
+                      bool starred = todos[i].toggleStar();
                       String message = (starred)
                           ? 'Starred as important'
                           : 'Removed from starred';

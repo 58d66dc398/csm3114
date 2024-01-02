@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:what_todo/data_tasks.dart';
+import 'package:what_todo/utils.dart';
 import 'package:what_todo/widget_add_task.dart';
 import 'package:what_todo/widget_tasks.dart';
 import 'package:what_todo/widget_tasks_star.dart';
@@ -17,70 +18,56 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int viewIndex = 1;
-  List<Task> todos = Task.todos, done = Task.done;
-
-  List<String> titles = ['Important Tasks', 'Tasks'];
-  late List<Widget> views;
-
-  void refresh() => setState(() {});
+  int pageIndex = 1;
 
   @override
   Widget build(BuildContext context) {
-    // ignore: prefer_const_constructors
-    views = <Widget>[StarTasksView(), TasksView()];
+    final ColorScheme scheme = Theme.of(context).colorScheme;
+    final Color systemNavigationBarColor =
+        ElevationOverlay.applySurfaceTint(scheme.surface, scheme.primary, 3);
+    final ScaffoldMessengerState messengerState = ScaffoldMessenger.of(context);
 
     return Scaffold(
       appBar: AppBar(
         systemOverlayStyle: SystemUiOverlayStyle(
-          systemNavigationBarColor: Theme.of(context).canvasColor,
+          systemNavigationBarColor: systemNavigationBarColor,
         ),
-        title: Text(titles[viewIndex]),
+        title: Text(['Important Tasks', 'Tasks'][pageIndex]),
         centerTitle: true,
       ),
-      // task list
-      body: views.elementAt(viewIndex),
+      // ignore: prefer_const_constructors
+      body: <Widget>[StarTasksView(), TasksView()][pageIndex],
       floatingActionButton: InkWell(
         // demo purposes
-        onLongPress: () => setState(() {
-          addDummy();
-          Task.sortAll();
-          ScaffoldMessenger.of(context)
-            ..removeCurrentSnackBar()
-            ..showSnackBar(
-              const SnackBar(
-                content: Text('DEBUG: DUMMY DATA ADDED'),
-              ),
-            );
-        }),
+        onLongPress: () {
+          setState(() => addDummy());
+          snack(messengerState, 'DEBUG: DUMMY DATA ADDED');
+        },
+        // add task
         child: FloatingActionButton(
           onPressed: () async {
             await showModalBottomSheet(
               isScrollControlled: true,
               context: context,
-              builder: (context) => AddTaskView(refresh),
+              builder: (context) => const AddTaskView(),
             ).then((task) {
               if (task is Task) {
-                setState(() {
-                  todos.add(task);
-                  Task.sortAll();
-                  viewIndex = viewIndex;
-                });
+                setState(() => Task.addTodo(task));
               }
             });
           },
           child: const Icon(Icons.add),
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: viewIndex,
-        onTap: (i) => setState(() {
-          ScaffoldMessenger.of(context).removeCurrentSnackBar();
-          viewIndex = i;
-        }),
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Starred'),
-          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Tasks'),
+      bottomNavigationBar: NavigationBar(
+        onDestinationSelected: (int index) {
+          messengerState.removeCurrentSnackBar();
+          setState(() => pageIndex = index);
+        },
+        selectedIndex: pageIndex,
+        destinations: const <Widget>[
+          NavigationDestination(icon: Icon(Icons.star), label: 'Starred'),
+          NavigationDestination(icon: Icon(Icons.list_alt), label: 'Tasks'),
         ],
         // selectedItemColor: Theme.of(context).primaryColor,
       ),

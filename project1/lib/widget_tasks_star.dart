@@ -43,7 +43,7 @@ class StarTasksViewState extends State<StarTasksView> {
   void removeStar(int index) {
     setState(() {
       Task cache = star[index];
-      Task.toggleStar(cache);
+      cache.toggleStar();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Removed from starred'),
