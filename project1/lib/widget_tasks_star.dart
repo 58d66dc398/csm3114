@@ -101,7 +101,7 @@ class StarTasksViewState extends State<StarTasksView> {
               }
             },
             background: Container(
-              color: Colors.yellow,
+              color: Colors.black12,
               padding: const EdgeInsets.all(16),
               child: const Align(
                 alignment: Alignment.centerLeft,
