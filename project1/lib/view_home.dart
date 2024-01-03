@@ -19,6 +19,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int pageIndex = 1;
+  double navElevation = 3;
 
   @override
   void initState() {
@@ -28,13 +29,17 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    final Color systemNavigationBarColor =
-        ElevationOverlay.applySurfaceTint(scheme.surface, scheme.primary, 3);
-    final ScaffoldMessengerState messengerState = ScaffoldMessenger.of(context);
+    Color navColor = ElevationOverlay.applySurfaceTint(
+        scheme.surface, scheme.primary, navElevation);
+
+    final ScaffoldMessengerState mState = ScaffoldMessenger.of(context);
+
     return Scaffold(
       appBar: AppBar(
         systemOverlayStyle: SystemUiOverlayStyle(
-          systemNavigationBarColor: systemNavigationBarColor,
+          systemNavigationBarColor: navColor,
+          statusBarColor: Colors.transparent,
+          statusBarBrightness: Brightness.light,
         ),
         title: Text(['Important Tasks', 'Tasks'][pageIndex]),
         centerTitle: true,
@@ -46,16 +51,17 @@ class _HomePageState extends State<HomePage> {
         onLongPress: () async {
           await Data.dummy();
           setState(() {});
-          snack(messengerState, 'DEBUG: DUMMY DATA ADDED');
+          snack(mState, 'DEBUG: DUMMY DATA ADDED');
         },
         onDoubleTap: () async {
           await Data.nuke();
           setState(() {});
-          snack(messengerState, 'DEBUG: BOOM');
+          snack(mState, 'DEBUG: BOOM');
         },
         // add task
         child: FloatingActionButton(
           onPressed: () async {
+            setState(() => navElevation = 1);
             await showModalBottomSheet(
               isScrollControlled: true,
               context: context,
@@ -65,13 +71,14 @@ class _HomePageState extends State<HomePage> {
                 setState(() => task.addTodo());
               }
             });
+            setState(() => navElevation = 3);
           },
           child: const Icon(Icons.add),
         ),
       ),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
-          messengerState.removeCurrentSnackBar();
+          mState.removeCurrentSnackBar();
           setState(() => pageIndex = index);
         },
         selectedIndex: pageIndex,
