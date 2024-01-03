@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:what_todo/utils.dart';
 import 'package:what_todo/view_edit_task.dart';
 
+import 'data.dart';
 import 'model_task.dart';
 
 class TasksView extends StatefulWidget {
@@ -15,35 +16,57 @@ class TasksView extends StatefulWidget {
 }
 
 class TasksViewState extends State<TasksView> {
+  final List<Task> todos = Task.todos, done = Task.done, star = Task.star;
   final DateFormat df = DateFormat("yyyy/MM/dd HH:mm");
-
-  List<Task> todos = Task.todos, done = Task.done, star = Task.star;
 
   void refresh() => setState(() {});
 
   void _snackRemove(void Function() onUndo) {
     ScaffoldMessengerState state = ScaffoldMessenger.of(context);
     String message = 'Deleted Task';
-    snackUndo(state, message, () => setState(onUndo));
+    state
+      ..removeCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          action: SnackBarAction(label: 'Undo', onPressed: () async {
+            setState(onUndo);
+            await Data.save();
+          }),
+        ),
+      );
   }
 
-  void removeTodo(int index) {
+  Future<void> removeTodo(int index) async {
     Task cache = todos[index];
-    int starIndex = (star.contains(cache)) ? star.indexOf(cache) : -1;
-
-    setState(() => Task.removeTodo(cache));
-    _snackRemove(() => Task.insertTodo(index, cache, starIndex: starIndex));
+    bool wasStarred = cache.removeTodo();
+    _snackRemove(() => cache.addTodo(wasStarred: wasStarred));
+    setState(() {});
+    await Data.save();
   }
 
-  void removeDone(int index) {
-    setState(() {
-      Task cache = done.removeAt(index);
-      _snackRemove(() => done.insert(index, cache));
-    });
+  Future<void> removeDone(int index) async {
+    Task cache = todos[index];
+    _snackRemove(() => cache.addDone());
+    setState(() {});
+    await Data.save();
+  }
+
+  Future<void> checkDone(Task task) async {
+    ScaffoldMessengerState state = ScaffoldMessenger.of(context);
+    setState(() => task.flipDone());
+    await Data.save();
+    if (context.mounted) {
+      bool isDone = done.contains(task);
+      String message = (isDone) ? 'Marked as done' : 'Marked undone';
+      snack(state, message);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    ScaffoldMessengerState state = ScaffoldMessenger.of(context);
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -63,23 +86,11 @@ class TasksViewState extends State<TasksView> {
                         task: todos[i],
                       ),
                     ),
-                  ).then((value) {
+                  ).then((value) async {
                     if (value == 'done') {
-                      Task cache = todos.removeAt(i);
-                      if (star.contains(cache)) {
-                        star.remove(cache);
-                      }
-                      done.add(cache);
-                      ScaffoldMessenger.of(context)
-                        ..removeCurrentSnackBar()
-                        ..showSnackBar(
-                          const SnackBar(
-                            content: Text('Marked as done'),
-                          ),
-                        );
+                      await checkDone(todos[i]);
                     } else if (value == 'delete') {
-                      removeTodo(i);
-                      return;
+                      await removeTodo(i);
                     }
                     setState(() {});
                   });
@@ -88,23 +99,25 @@ class TasksViewState extends State<TasksView> {
                   key: UniqueKey(),
                   confirmDismiss: (direction) async {
                     if (direction == DismissDirection.startToEnd) {
-                      bool starred = todos[i].toggleStar();
-                      String message = (starred)
+                      todos[i].flipStar();
+                      await Data.save();
+                      String message = (todos[i].starred)
                           ? 'Starred as important'
                           : 'Removed from starred';
-                      ScaffoldMessenger.of(context)
-                        ..removeCurrentSnackBar()
-                        ..showSnackBar(SnackBar(content: Text(message)));
+                      snack(state, message);
                     }
                     return direction == DismissDirection.endToStart;
                   },
-                  onDismissed: (direction) => setState(() => removeTodo(i)),
+                  onDismissed: (direction) async {
+                    await removeTodo(i);
+                    setState(() {});
+                  },
                   background: Container(
                     color: Colors.yellow,
                     padding: const EdgeInsets.all(16),
                     child: const Align(
                       alignment: Alignment.centerLeft,
-                      child: Icon(Icons.star_border, size: 32),
+                      child: Icon(Icons.star_border_rounded, size: 32),
                     ),
                   ),
                   secondaryBackground: Container(
@@ -118,15 +131,8 @@ class TasksViewState extends State<TasksView> {
                     leading: Checkbox(
                       shape: const CircleBorder(),
                       value: false,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          Task cache = todos.removeAt(i);
-                          if (star.contains(cache)) {
-                            star.remove(cache);
-                          }
-                          done.add(cache);
-                          Task.sortAll();
-                        });
+                      onChanged: (bool? value) async {
+                        await checkDone(todos[i]);
                       },
                     ),
                     contentPadding: const EdgeInsets.symmetric(
@@ -158,7 +164,10 @@ class TasksViewState extends State<TasksView> {
                     return Dismissible(
                       key: UniqueKey(),
                       direction: DismissDirection.endToStart,
-                      onDismissed: (direction) => setState(() => removeDone(i)),
+                      onDismissed: (direction) async {
+                        await removeDone(i);
+                        setState(() {});
+                      },
                       background: Container(
                         color: Colors.red,
                         padding: const EdgeInsets.all(16),
@@ -171,19 +180,15 @@ class TasksViewState extends State<TasksView> {
                         leading: Checkbox(
                           shape: const CircleBorder(),
                           value: true,
-                          onChanged: (bool? value) {
-                            setState(() {
-                              todos.add(done.removeAt(i));
-                              Task.sortAll();
-                            });
+                          onChanged: (bool? value) async {
+                            await checkDone(done[i]);
                           },
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 16),
+                          vertical: 8,
+                          horizontal: 16,
+                        ),
                         title: Text(done[i].title),
-                        // subtitle: (done[i].deadline != null)
-                        //     ? Text(df.format(done[i].deadline!.toLocal()))
-                        //     : null,
                       ),
                     );
                   },

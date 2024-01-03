@@ -1,0 +1,61 @@
+import 'dart:convert';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'model_task.dart';
+
+class Data {
+  static Future<void> save() async {
+    List<String> sTodos = [];
+    for (Task t in Task.todos) {
+      sTodos.add(json.encode(t.toJson()));
+    }
+    List<String> sDone = [];
+    for (Task t in Task.done) {
+      sDone.add(json.encode(t.toJson()));
+    }
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList('todos', sTodos);
+    await preferences.setStringList('done', sDone);
+    print('saved ${Task.todos.length} todos');
+    print('saved ${Task.done.length} done');
+  }
+
+  static Future<void> load() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    if (preferences.containsKey('todos')) {
+      List<String> sTodos = preferences.getStringList('todos')!;
+      for (String s in sTodos) {
+        Task task = Task.fromJson(json.decode(s));
+        Task.todos.add(task);
+      }
+    } else {
+      await preferences.setStringList('todos', []);
+    }
+    if (preferences.containsKey('done')) {
+      List<String> sDone = preferences.getStringList('done')!;
+      for (String s in sDone) {
+        Task.done.add(Task.fromJson(json.decode(s)));
+      }
+    } else {
+      await preferences.setStringList('done', []);
+    }
+    print('loaded ${Task.todos.length} todos');
+    print('loaded ${Task.done.length} done, ${Task.star.length} star');
+  }
+
+  static Future<void> dummy() async {
+    Task task2 = Task(title: 'Test 2', deadline: DateTime.now(), starred: true);
+    Task.todos.insertAll(Task.todos.length, [Task(title: 'Test 1'), task2]);
+    Task.done.insert(Task.done.length, Task(title: 'Test 3'));
+    Task.sortAll();
+
+    await save();
+  }
+
+  static Future<void> nuke() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    preferences.clear();
+    load();
+  }
+}

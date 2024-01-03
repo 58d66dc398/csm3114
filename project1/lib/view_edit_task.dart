@@ -26,10 +26,10 @@ class _EditTaskPageState extends State<EditTaskPage> {
   final GlobalKey<FormState> _key = GlobalKey<FormState>();
   List<Widget> partDeadline = <Widget>[];
 
-  void updateTask() {
+  void updateTodo() {
     if (_key.currentState!.validate()) {
       _key.currentState!.save();
-      Task.sortAll();
+      Task.sortTodos();
       if (widget.refreshParent != null) {
         widget.refreshParent!();
       }
@@ -39,10 +39,8 @@ class _EditTaskPageState extends State<EditTaskPage> {
   DateTime? getDeadline() => widget.task.deadline;
 
   void setDeadline(DateTime? date) {
-    setState(() {
-      widget.task.deadline = date;
-      updateTask();
-    });
+    widget.task.deadline = date;
+    updateTodo();
   }
 
   @override
@@ -62,10 +60,10 @@ class _EditTaskPageState extends State<EditTaskPage> {
         ),
         actions: [
           IconButton(
-            onPressed: () => setState(() => task.toggleStar()),
+            onPressed: () => setState(() => task.flipStar()),
             icon: Icon(
               Icons.star,
-              color: (Task.star.contains(task)) ? Colors.yellow : null,
+              color: (task.starred) ? Colors.yellow : null,
             ),
           ),
           IconButton(
@@ -80,7 +78,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
           child: Column(
             children: <Widget>[
               _FormSaveWrapper(
-                onFocusChange: updateTask,
+                onFocusChange: updateTodo,
                 child: TextFormField(
                   decoration: const InputDecoration(labelText: 'Task'),
                   initialValue: task.title,
@@ -102,7 +100,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
                 ),
               ),
               _FormSaveWrapper(
-                  onFocusChange: updateTask,
+                  onFocusChange: updateTodo,
                   child: TextFormField(
                     decoration: const InputDecoration(labelText: 'Details'),
                     initialValue: task.details,

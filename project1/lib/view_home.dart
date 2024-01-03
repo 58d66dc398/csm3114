@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:what_todo/data_tasks.dart';
-import 'package:what_todo/utils.dart';
-import 'package:what_todo/widget_add_task.dart';
-import 'package:what_todo/widget_tasks.dart';
-import 'package:what_todo/widget_tasks_star.dart';
 
+import 'data.dart';
 import 'model_task.dart';
+import 'utils.dart';
+import 'widget_add_task.dart';
+import 'widget_tasks.dart';
+import 'widget_tasks_star.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,12 +21,16 @@ class _HomePageState extends State<HomePage> {
   int pageIndex = 1;
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final ColorScheme scheme = Theme.of(context).colorScheme;
     final Color systemNavigationBarColor =
         ElevationOverlay.applySurfaceTint(scheme.surface, scheme.primary, 3);
     final ScaffoldMessengerState messengerState = ScaffoldMessenger.of(context);
-
     return Scaffold(
       appBar: AppBar(
         systemOverlayStyle: SystemUiOverlayStyle(
@@ -39,9 +43,15 @@ class _HomePageState extends State<HomePage> {
       body: <Widget>[StarTasksView(), TasksView()][pageIndex],
       floatingActionButton: InkWell(
         // demo purposes
-        onLongPress: () {
-          setState(() => addDummy());
+        onLongPress: () async {
+          await Data.dummy();
+          setState(() {});
           snack(messengerState, 'DEBUG: DUMMY DATA ADDED');
+        },
+        onDoubleTap: () async {
+          await Data.nuke();
+          setState(() {});
+          snack(messengerState, 'DEBUG: BOOM');
         },
         // add task
         child: FloatingActionButton(
@@ -52,7 +62,7 @@ class _HomePageState extends State<HomePage> {
               builder: (context) => const AddTaskView(),
             ).then((task) {
               if (task is Task) {
-                setState(() => Task.addTodo(task));
+                setState(() => task.addTodo());
               }
             });
           },

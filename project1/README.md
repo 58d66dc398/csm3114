@@ -6,6 +6,7 @@ Yet another to-do app.
 
 for file naming conventions (in `/lib`):
 
-- `view_*.dart` for a full page (with scaffold)
-- `part_*.dart` for widget component used in page(s)
+- `data.dart` for `SharedPreferences` related drama
 - `model_*.dart` for defined object classes
+- `view_*.dart` for a full page (with scaffold)
+- `widget_*.dart` for widget component used in page(s)

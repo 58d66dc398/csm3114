@@ -17,48 +17,111 @@ class Task {
     }
   }
 
-  static void addTodo(Task task) {
-    todos.add(task);
-    todos.sort(_rules);
-  }
-
-  static void removeTodo(Task task) {
-    todos.remove(task);
-    if (star.contains(task)) {
-      star.remove(task);
-    }
-  }
-
-  static void insertTodo(int index, Task task, {int starIndex = -1}) {
-    todos.insert(index, task);
-    if (starIndex > -1) {
-      star.insert(starIndex, task);
-    }
-  }
-
-  static void sortAll() {
-    todos.sort(_rules);
-    star.sort(_rules);
+  static void _sortDone() {
     done.sort((a, b) => a.title.compareTo(b.title));
   }
 
-  bool toggleStar() {
-    if (star.contains(this)) {
-      star.remove(this);
-      return false;
-    } else {
-      star.add(this);
-      return true;
-    }
+  static void _sortStar() {
+    star.sort(_rules);
+  }
+
+  static void sortTodos() {
+    todos.sort(_rules);
+  }
+
+  static void sortAll() {
+    sortTodos();
+    _sortDone();
+    _sortStar();
   }
 
   DateTime? deadline;
   String title;
   String details;
+  bool starred;
 
   Task({
     required this.title,
     this.deadline,
     this.details = "",
-  });
+    this.starred = false,
+  }) {
+    if (starred) {
+      addStar();
+    }
+  }
+
+  Task.fromJson(Map<String, dynamic> json)
+      : title = json['title'] as String,
+        details = json['details'] as String,
+        deadline = DateTime.tryParse(json['deadline']),
+        starred = json['starred'] ??= false {
+    if (starred) {
+      addStar();
+    }
+  }
+
+  Map<String, dynamic> toJson() => {
+        'title': title,
+        'details': details,
+        'deadline': (deadline != null) ? deadline.toString() : '',
+        'starred': starred
+      };
+
+  void addTodo({bool wasStarred = false}) {
+    todos.add(this);
+    sortTodos();
+    starred = wasStarred;
+    addStar();
+  }
+
+  bool removeTodo() {
+    todos.remove(this);
+    if (starred && star.contains(this)) {
+      starred = false;
+      removeStar();
+    }
+    return !starred;
+  }
+
+  void addDone() {
+    done.add(this);
+    _sortDone();
+  }
+
+  void removeDone() {
+    done.remove(this);
+  }
+
+  void flipDone() {
+    if (done.contains(this)) {
+      removeDone();
+      addTodo();
+    } else {
+      addDone();
+      removeTodo();
+    }
+  }
+
+  void addStar() {
+    if (starred) {
+      star.add(this);
+      _sortStar();
+    }
+  }
+
+  void removeStar() {
+    if (!starred) {
+      star.remove(this);
+    }
+  }
+
+  void flipStar() {
+    starred = !starred;
+    if (star.contains(this)) {
+      removeStar();
+    } else {
+      addStar();
+    }
+  }
 }
