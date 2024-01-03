@@ -46,7 +46,8 @@ class TasksViewState extends State<TasksView> {
   }
 
   Future<void> removeDone(int index) async {
-    Task cache = todos[index];
+    Task cache = done[index];
+    cache.removeDone();
     _snackRemove(() => cache.addDone());
     setState(() {});
     await Data.save();
