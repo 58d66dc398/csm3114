@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:what_todo/widget_set_datetime.dart';
 
 import 'model_task.dart';
+import 'widget_set_datetime.dart';
 
 class EditTaskPage extends StatefulWidget {
   final Function? refreshParent;
@@ -41,6 +41,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
   void setDeadline(DateTime? date) {
     widget.task.deadline = date;
     updateTodo();
+    setState(() {});
   }
 
   @override
