@@ -22,6 +22,10 @@ class Data {
   }
 
   static Future<void> load() async {
+    Task.todos.clear();
+    Task.star.clear();
+    Task.done.clear();
+
     SharedPreferences preferences = await SharedPreferences.getInstance();
     if (preferences.containsKey('todos')) {
       List<String> sTodos = preferences.getStringList('todos')!;
@@ -55,7 +59,7 @@ class Data {
 
   static Future<void> nuke() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
-    preferences.clear();
-    load();
+    await preferences.clear();
+    await load();
   }
 }
