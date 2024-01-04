@@ -15,7 +15,7 @@ class TaskApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-    title: 'Task',
+    title: 'To Do',
     darkTheme: ThemeData.dark(),
     home: const HomePage(),
     );
