@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -21,10 +22,23 @@ class _HomePageState extends State<HomePage> {
   int pageIndex = 1;
   double navElevation = 3;
 
-  @override
-  void initState() {
-    super.initState();
-  }
+  Widget addTaskButton() => FloatingActionButton(
+    onPressed: () async {
+      setState(() => navElevation = 1);
+      await showModalBottomSheet(
+        isScrollControlled: true,
+        context: context,
+        builder: (context) => const AddTaskView(),
+      ).then((task) {
+        if (task is Task) {
+          setState(() => task.addTodo());
+        }
+      });
+      setState(() => navElevation = 3);
+    },
+    child: const Icon(Icons.add),
+  );
+
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +60,7 @@ class _HomePageState extends State<HomePage> {
       ),
       // ignore: prefer_const_constructors
       body: <Widget>[StarTasksView(), TasksView()][pageIndex],
-      floatingActionButton: InkWell(
+      floatingActionButton: kReleaseMode ? addTaskButton() : InkWell(
         // demo purposes
         onLongPress: () async {
           await Data.dummy();
@@ -59,22 +73,7 @@ class _HomePageState extends State<HomePage> {
           snack(mState, 'DEBUG: BOOM');
         },
         // add task
-        child: FloatingActionButton(
-          onPressed: () async {
-            setState(() => navElevation = 1);
-            await showModalBottomSheet(
-              isScrollControlled: true,
-              context: context,
-              builder: (context) => const AddTaskView(),
-            ).then((task) {
-              if (task is Task) {
-                setState(() => task.addTodo());
-              }
-            });
-            setState(() => navElevation = 3);
-          },
-          child: const Icon(Icons.add),
-        ),
+        child: addTaskButton(),
       ),
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
