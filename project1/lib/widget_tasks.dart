@@ -70,137 +70,147 @@ class TasksViewState extends State<TasksView> {
   Widget build(BuildContext context) {
     ScaffoldMessengerState state = ScaffoldMessenger.of(context);
 
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          ListView.builder(
-            physics: const ClampingScrollPhysics(),
-            shrinkWrap: true,
-            itemCount: todos.length,
-            itemBuilder: (BuildContext context, int i) {
-              return InkWell(
-                // edit existing task
-                onTap: () async {
-                  await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => EditTaskPage(
-                        refreshParent: refresh,
-                        task: todos[i],
-                      ),
-                    ),
-                  ).then((value) async {
-                    if (value == 'done') {
-                      await checkDone(todos[i]);
-                    } else if (value == 'delete') {
-                      await removeTodo(i);
-                    }
-                    setState(() {});
-                  });
-                },
-                child: Dismissible(
-                  key: UniqueKey(),
-                  confirmDismiss: (direction) async {
-                    if (direction == DismissDirection.startToEnd) {
-                      todos[i].flipStar();
-                      await Data.save();
-                      String message = (todos[i].starred)
-                          ? 'Starred as important'
-                          : 'Removed from starred';
-                      snack(state, message);
-                    }
-                    return direction == DismissDirection.endToStart;
-                  },
-                  onDismissed: (direction) async {
-                    await removeTodo(i);
-                    setState(() {});
-                  },
-                  background: Container(
-                    color: Colors.yellow,
-                    padding: const EdgeInsets.all(16),
-                    child: const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Icon(Icons.star_border_rounded, size: 32),
-                    ),
-                  ),
-                  secondaryBackground: Container(
-                    color: Colors.red,
-                    padding: const EdgeInsets.all(16),
-                    child: const Align(
-                        alignment: Alignment.centerRight,
-                        child: Icon(Icons.delete_outline, size: 32)),
-                  ),
-                  child: ListTile(
-                    leading: Checkbox(
-                      shape: const CircleBorder(),
-                      value: false,
-                      onChanged: (bool? value) async {
-                        await checkDone(todos[i]);
-                      },
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 8,
-                      horizontal: 16,
-                    ),
-                    title: Text(todos[i].title),
-                    subtitle: (todos[i].deadline != null)
-                        ? Text(df.format(todos[i].deadline!.toLocal()))
-                        : null,
-                  ),
-                ),
-              );
-            },
-          ),
-          // done list
-          Visibility(
-            visible: done.isNotEmpty,
-            child: ExpansionTile(
-              shape: const Border(),
-              tilePadding: const EdgeInsets.symmetric(horizontal: 32),
-              title: const Text('Completed Task'),
-              children: <Widget>[
+    return (Task.todos.isEmpty && Task.done.isEmpty)
+        ? const Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Nothing here, add new task with'),
+                Icon(Icons.add),
+              ],
+            ),
+          )
+        : SingleChildScrollView(
+            child: Column(
+              children: [
                 ListView.builder(
                   physics: const ClampingScrollPhysics(),
                   shrinkWrap: true,
-                  itemCount: done.length,
-                  itemBuilder: (context, i) {
-                    return Dismissible(
-                      key: UniqueKey(),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (direction) async {
-                        await removeDone(i);
-                        setState(() {});
+                  itemCount: todos.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    return InkWell(
+                      // edit existing task
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditTaskPage(
+                              refreshParent: refresh,
+                              task: todos[i],
+                            ),
+                          ),
+                        ).then((value) async {
+                          if (value == 'done') {
+                            await checkDone(todos[i]);
+                          } else if (value == 'delete') {
+                            await removeTodo(i);
+                          }
+                          setState(() {});
+                        });
                       },
-                      background: Container(
-                        color: Colors.red,
-                        padding: const EdgeInsets.all(16),
-                        child: const Align(
-                            alignment: Alignment.centerRight,
-                            child: Icon(Icons.delete_outline, size: 32)),
-                      ),
-                      child: ListTile(
-                        enabled: false,
-                        leading: Checkbox(
-                          shape: const CircleBorder(),
-                          value: true,
-                          onChanged: (bool? value) async {
-                            await checkDone(done[i]);
-                          },
+                      child: Dismissible(
+                        key: UniqueKey(),
+                        confirmDismiss: (direction) async {
+                          if (direction == DismissDirection.startToEnd) {
+                            todos[i].flipStar();
+                            await Data.save();
+                            String message = (todos[i].starred)
+                                ? 'Starred as important'
+                                : 'Removed from starred';
+                            snack(state, message);
+                          }
+                          return direction == DismissDirection.endToStart;
+                        },
+                        onDismissed: (direction) async {
+                          await removeTodo(i);
+                          setState(() {});
+                        },
+                        background: Container(
+                          color: Colors.yellow,
+                          padding: const EdgeInsets.all(16),
+                          child: const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Icon(Icons.star_border, size: 32),
+                          ),
                         ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 8,
-                          horizontal: 16,
+                        secondaryBackground: Container(
+                          color: Colors.red,
+                          padding: const EdgeInsets.all(16),
+                          child: const Align(
+                              alignment: Alignment.centerRight,
+                              child: Icon(Icons.delete_outline, size: 32)),
                         ),
-                        title: Text(done[i].title),
+                        child: ListTile(
+                          leading: Checkbox(
+                            shape: const CircleBorder(),
+                            value: false,
+                            onChanged: (bool? value) async {
+                              await checkDone(todos[i]);
+                            },
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 8,
+                            horizontal: 16,
+                          ),
+                          title: Text(todos[i].title),
+                          subtitle: (todos[i].deadline != null)
+                              ? Text(df.format(todos[i].deadline!.toLocal()))
+                              : null,
+                        ),
                       ),
                     );
                   },
                 ),
+                // done list
+                Visibility(
+                  visible: done.isNotEmpty,
+                  child: ExpansionTile(
+                    shape: const Border(),
+                    tilePadding: const EdgeInsets.symmetric(horizontal: 32),
+                    title: const Text('Completed Task'),
+                    children: <Widget>[
+                      ListView.builder(
+                        physics: const ClampingScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: done.length,
+                        itemBuilder: (context, i) {
+                          return Dismissible(
+                            key: UniqueKey(),
+                            direction: DismissDirection.endToStart,
+                            onDismissed: (direction) async {
+                              await removeDone(i);
+                              setState(() {});
+                            },
+                            background: Container(
+                              color: Colors.red,
+                              padding: const EdgeInsets.all(16),
+                              child: const Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Icon(Icons.delete_outline, size: 32)),
+                            ),
+                            child: ListTile(
+                              enabled: false,
+                              leading: Checkbox(
+                                shape: const CircleBorder(),
+                                value: true,
+                                onChanged: (bool? value) async {
+                                  await checkDone(done[i]);
+                                },
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 8,
+                                horizontal: 16,
+                              ),
+                              title: Text(done[i].title),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
+          );
   }
 }

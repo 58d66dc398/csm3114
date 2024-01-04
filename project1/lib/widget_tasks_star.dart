@@ -58,87 +58,98 @@ class StarTasksViewState extends State<StarTasksView> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      physics: const ClampingScrollPhysics(),
-      shrinkWrap: true,
-      itemCount: star.length,
-      itemBuilder: (BuildContext context, int i) {
-        return InkWell(
-          // edit existing task
-          onTap: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => EditTaskPage(
-                  refreshParent: refresh,
-                  task: star[i],
-                ),
-              ),
-            ).then((value) {
-              if (value == 'done') {
-                setState(() {
-                  Task cache = star.removeAt(i);
-                  todos.remove(cache);
-                  done.add(cache);
-                });
-                ScaffoldMessenger.of(context)
-                  ..removeCurrentSnackBar()
-                  ..showSnackBar(
-                    const SnackBar(content: Text('Marked as done')),
-                  );
-              } else if (value == 'delete') {
-                removeTask(star[i]);
-              }
-            });
-          },
-          child: Dismissible(
-            key: UniqueKey(),
-            onDismissed: (direction) {
-              if (direction == DismissDirection.endToStart) {
-                removeTask(star[i]);
-              } else if (direction == DismissDirection.startToEnd) {
-                removeStar(i);
-              }
-            },
-            background: Container(
-              color: Colors.black12,
-              padding: const EdgeInsets.all(16),
-              child: const Align(
-                alignment: Alignment.centerLeft,
-                child: Icon(Icons.star_border, size: 32),
-              ),
+    return (Task.star.isEmpty)
+        ? const Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('No starred tasks, '),
+                Icon(Icons.star),
+                Text(' task when editing.'),
+              ],
             ),
-            secondaryBackground: Container(
-              color: Colors.red,
-              padding: const EdgeInsets.all(16),
-              child: const Align(
-                  alignment: Alignment.centerRight,
-                  child: Icon(Icons.delete_outline, size: 32)),
-            ),
-            child: ListTile(
-              leading: Checkbox(
-                shape: const CircleBorder(),
-                value: false,
-                onChanged: (bool? value) {
-                  setState(() {
-                    Task cache = star.removeAt(i);
-                    todos.remove(cache);
-                    done.add(cache);
+          )
+        : ListView.builder(
+            physics: const ClampingScrollPhysics(),
+            shrinkWrap: true,
+            itemCount: star.length,
+            itemBuilder: (BuildContext context, int i) {
+              return InkWell(
+                // edit existing task
+                onTap: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EditTaskPage(
+                        refreshParent: refresh,
+                        task: star[i],
+                      ),
+                    ),
+                  ).then((value) {
+                    if (value == 'done') {
+                      setState(() {
+                        Task cache = star.removeAt(i);
+                        todos.remove(cache);
+                        done.add(cache);
+                      });
+                      ScaffoldMessenger.of(context)
+                        ..removeCurrentSnackBar()
+                        ..showSnackBar(
+                          const SnackBar(content: Text('Marked as done')),
+                        );
+                    } else if (value == 'delete') {
+                      removeTask(star[i]);
+                    }
                   });
                 },
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                vertical: 8,
-                horizontal: 16,
-              ),
-              title: Text(star[i].title),
-              subtitle: (star[i].deadline != null)
-                  ? Text(df.format(star[i].deadline!.toLocal()))
-                  : null,
-            ),
-          ),
-        );
-      },
-    );
+                child: Dismissible(
+                  key: UniqueKey(),
+                  onDismissed: (direction) {
+                    if (direction == DismissDirection.endToStart) {
+                      removeTask(star[i]);
+                    } else if (direction == DismissDirection.startToEnd) {
+                      removeStar(i);
+                    }
+                  },
+                  background: Container(
+                    color: Colors.black12,
+                    padding: const EdgeInsets.all(16),
+                    child: const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Icon(Icons.star_border, size: 32),
+                    ),
+                  ),
+                  secondaryBackground: Container(
+                    color: Colors.red,
+                    padding: const EdgeInsets.all(16),
+                    child: const Align(
+                        alignment: Alignment.centerRight,
+                        child: Icon(Icons.delete_outline, size: 32)),
+                  ),
+                  child: ListTile(
+                    leading: Checkbox(
+                      shape: const CircleBorder(),
+                      value: false,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          Task cache = star.removeAt(i);
+                          todos.remove(cache);
+                          done.add(cache);
+                        });
+                      },
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 16,
+                    ),
+                    title: Text(star[i].title),
+                    subtitle: (star[i].deadline != null)
+                        ? Text(df.format(star[i].deadline!.toLocal()))
+                        : null,
+                  ),
+                ),
+              );
+            },
+          );
   }
 }
