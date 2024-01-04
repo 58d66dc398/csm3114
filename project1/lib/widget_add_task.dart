@@ -1,10 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:what_todo/view_edit_task.dart';
-import 'package:what_todo/widget_set_datetime.dart';
 
 import 'model_task.dart';
+import 'view_edit_task.dart';
+import 'widget_set_datetime.dart';
 
 class AddTaskView extends StatefulWidget {
   const AddTaskView({super.key});

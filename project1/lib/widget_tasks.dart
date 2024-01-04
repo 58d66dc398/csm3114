@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:what_todo/utils.dart';
-import 'package:what_todo/view_edit_task.dart';
 
 import 'data.dart';
 import 'model_task.dart';
+import 'utils.dart';
+import 'view_edit_task.dart';
 
 class TasksView extends StatefulWidget {
   const TasksView({super.key});
@@ -29,10 +29,12 @@ class TasksViewState extends State<TasksView> {
       ..showSnackBar(
         SnackBar(
           content: Text(message),
-          action: SnackBarAction(label: 'Undo', onPressed: () async {
-            setState(onUndo);
-            await Data.save();
-          }),
+          action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () async {
+                setState(onUndo);
+                await Data.save();
+              }),
         ),
       );
   }

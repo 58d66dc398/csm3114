@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:what_todo/view_edit_task.dart';
 
 import 'model_task.dart';
+import 'view_edit_task.dart';
 
 class StarTasksView extends StatefulWidget {
   const StarTasksView({super.key});
