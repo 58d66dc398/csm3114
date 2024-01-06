@@ -30,3 +30,6 @@ void snackWithUndo(
       ),
     );
 }
+
+Color tintColor(Color color, Color tint, double elevation) =>
+    ElevationOverlay.applySurfaceTint(color, tint, elevation);

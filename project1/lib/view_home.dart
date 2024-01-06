@@ -49,11 +49,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     // https://api.flutter.dev/flutter/material/NavigationBar/backgroundColor.html
     final ColorScheme scheme = Theme.of(context).colorScheme;
-    Color navColor = ElevationOverlay.applySurfaceTint(
-      scheme.surface,
-      scheme.primary,
-      navElevation,
-    );
+    Color navColor = tintColor(scheme.surface, scheme.primary, navElevation);
 
     final ScaffoldMessengerState mState = ScaffoldMessenger.of(context);
 

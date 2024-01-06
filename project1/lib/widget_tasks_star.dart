@@ -44,6 +44,8 @@ class StarTasksViewState extends State<StarTasksView> {
   @override
   Widget build(BuildContext context) {
     ScaffoldMessengerState state = ScaffoldMessenger.of(context);
+    final Color backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    Color yellowTint = tintColor(Colors.yellow, backgroundColor, 5);
 
     return (Task.star.isEmpty)
         ? const Center(
@@ -95,7 +97,7 @@ class StarTasksViewState extends State<StarTasksView> {
                     }
                   },
                   background: Container(
-                    color: Colors.black12,
+                    color: yellowTint,
                     padding: const EdgeInsets.all(16),
                     child: const Align(
                       alignment: Alignment.centerLeft,

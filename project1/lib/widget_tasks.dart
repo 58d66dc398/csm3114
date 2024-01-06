@@ -59,6 +59,8 @@ class TasksViewState extends State<TasksView> {
   @override
   Widget build(BuildContext context) {
     ScaffoldMessengerState state = ScaffoldMessenger.of(context);
+    Color background = Theme.of(context).scaffoldBackgroundColor;
+    Color yellowTint = tintColor(Colors.yellow, background, 5);
 
     return (Task.todos.isEmpty && Task.done.isEmpty)
         ? const Center(
@@ -120,7 +122,7 @@ class TasksViewState extends State<TasksView> {
                           setState(() {});
                         },
                         background: Container(
-                          color: Colors.yellow,
+                          color: yellowTint,
                           padding: const EdgeInsets.all(16),
                           child: const Align(
                             alignment: Alignment.centerLeft,
