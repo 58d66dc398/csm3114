@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:what_todo/utils.dart';
 
+import 'data.dart';
 import 'model_task.dart';
 import 'view_edit_task.dart';
 
@@ -20,41 +22,23 @@ class StarTasksViewState extends State<StarTasksView> {
 
   void refresh() => setState(() {});
 
-  void removeTask(Task task) {
-    setState(() {
-      int todoIndex = todos.indexOf(task), starIndex = star.indexOf(task);
-      todos.remove(task);
-      star.remove(task);
-      // https://stackoverflow.com/questions/70830642
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Deleted Task'),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () => setState(() {
-              todos.insert(todoIndex, task);
-              star.insert(starIndex, task);
-            }),
-          ),
-        ),
-      );
-    });
+  void removeTask(Task task) async {
+    setState(() => task.removeTodo());
+    snackWithUndo(
+      ScaffoldMessenger.of(context),
+      'Task Removed',
+      () => setState(() => task.addTodo(wasStarred: true)),
+    );
+    await Data.save();
   }
 
-  void removeStar(int index) {
-    setState(() {
-      Task cache = star[index];
-      cache.flipStar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Removed from starred'),
-          action: SnackBarAction(
-            label: 'Undo',
-            onPressed: () => setState(() => star.insert(index, cache)),
-          ),
-        ),
-      );
-    });
+  void removeStar(Task task) {
+    setState(() => task.flipStar());
+    snackWithUndo(
+      ScaffoldMessenger.of(context),
+      'Removed from Starred',
+      () => setState(() => task.flipStar()),
+    );
   }
 
   @override
@@ -109,7 +93,7 @@ class StarTasksViewState extends State<StarTasksView> {
                     if (direction == DismissDirection.endToStart) {
                       removeTask(star[i]);
                     } else if (direction == DismissDirection.startToEnd) {
-                      removeStar(i);
+                      removeStar(star[i]);
                     }
                   },
                   background: Container(

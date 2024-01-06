@@ -21,28 +21,14 @@ class TasksViewState extends State<TasksView> {
 
   void refresh() => setState(() {});
 
-  void _snackRemove(void Function() onUndo) {
-    ScaffoldMessengerState state = ScaffoldMessenger.of(context);
-    String message = 'Deleted Task';
-    state
-      ..removeCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          action: SnackBarAction(
-              label: 'Undo',
-              onPressed: () async {
-                setState(onUndo);
-                await Data.save();
-              }),
-        ),
-      );
-  }
-
   Future<void> removeTodo(int index) async {
     Task cache = todos[index];
     bool wasStarred = cache.removeTodo();
-    _snackRemove(() => cache.addTodo(wasStarred: wasStarred));
+    snackWithUndo(
+      ScaffoldMessenger.of(context),
+      'Removed Task',
+      () => setState(() => cache.addTodo(wasStarred: wasStarred)),
+    );
     setState(() {});
     await Data.save();
   }
@@ -50,7 +36,11 @@ class TasksViewState extends State<TasksView> {
   Future<void> removeDone(int index) async {
     Task cache = done[index];
     cache.removeDone();
-    _snackRemove(() => cache.addDone());
+    snackWithUndo(
+      ScaffoldMessenger.of(context),
+      'Removed Task',
+      () => setState(() => cache.addDone()),
+    );
     setState(() {});
     await Data.save();
   }

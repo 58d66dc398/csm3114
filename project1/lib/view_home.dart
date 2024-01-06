@@ -31,9 +31,13 @@ class _HomePageState extends State<HomePage> {
             isScrollControlled: true,
             context: context,
             builder: (context) => const AddTaskView(),
-          ).then((task) {
+          ).then((task) async {
             if (task is Task) {
-              setState(() => task.addTodo());
+              setState(() {
+                task.addTodo();
+                pageIndex = 1;
+              });
+              await Data.save();
             }
           });
           setState(() => navElevation = 3);
