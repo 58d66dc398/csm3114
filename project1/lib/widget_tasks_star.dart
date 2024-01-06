@@ -43,6 +43,8 @@ class StarTasksViewState extends State<StarTasksView> {
 
   @override
   Widget build(BuildContext context) {
+    ScaffoldMessengerState state = ScaffoldMessenger.of(context);
+
     return (Task.star.isEmpty)
         ? const Center(
             child: Row(
@@ -77,11 +79,7 @@ class StarTasksViewState extends State<StarTasksView> {
                         todos.remove(cache);
                         done.add(cache);
                       });
-                      ScaffoldMessenger.of(context)
-                        ..removeCurrentSnackBar()
-                        ..showSnackBar(
-                          const SnackBar(content: Text('Marked as done')),
-                        );
+                      snack(state, 'Marked as done');
                     } else if (value == 'delete') {
                       removeTask(star[i]);
                     }
