@@ -1,9 +1,12 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'model_task.dart';
 
+// https://pub.dev/packages/shared_preferences
+// https://docs.flutter.dev/cookbook/persistence/key-value
 class Data {
   static Future<void> save() async {
     List<String> sTodos = [];
@@ -17,8 +20,11 @@ class Data {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     await preferences.setStringList('todos', sTodos);
     await preferences.setStringList('done', sDone);
-    print('saved ${Task.todos.length} todos');
-    print('saved ${Task.done.length} done');
+    // https://stackoverflow.com/questions/73669989
+    if (kDebugMode) {
+      print('saved ${Task.todos.length} todos');
+      print('saved ${Task.done.length} done');
+    }
   }
 
   static Future<void> load() async {
@@ -44,8 +50,10 @@ class Data {
     } else {
       await preferences.setStringList('done', []);
     }
-    print('loaded ${Task.todos.length} todos');
-    print('loaded ${Task.done.length} done, ${Task.star.length} star');
+    if (kDebugMode) {
+      print('loaded ${Task.todos.length} todos');
+      print('loaded ${Task.done.length} done, ${Task.star.length} star');
+    }
   }
 
   static Future<void> dummy() async {
@@ -53,7 +61,6 @@ class Data {
     Task.todos.insertAll(Task.todos.length, [Task(title: 'Test 1'), task2]);
     Task.done.insert(Task.done.length, Task(title: 'Test 3'));
     Task.sortAll();
-
     await save();
   }
 

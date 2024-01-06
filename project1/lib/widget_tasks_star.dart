@@ -25,6 +25,7 @@ class StarTasksViewState extends State<StarTasksView> {
       int todoIndex = todos.indexOf(task), starIndex = star.indexOf(task);
       todos.remove(task);
       star.remove(task);
+      // https://stackoverflow.com/questions/70830642
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Deleted Task'),

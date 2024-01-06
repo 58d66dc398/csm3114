@@ -1,6 +1,8 @@
 class Task {
+  // https://www.geeksforgeeks.org/dart-static-keyword/
   static final List<Task> todos = [], done = [], star = [];
 
+  // https://stackoverflow.com/questions/53547997
   static int _rules(Task a, Task b) {
     if (a.deadline != null) {
       if (b.deadline != null) {
@@ -51,6 +53,7 @@ class Task {
     }
   }
 
+  // https://docs.flutter.dev/data-and-backend/serialization/json
   Task.fromJson(Map<String, dynamic> json)
       : title = json['title'] as String,
         details = json['details'] as String,

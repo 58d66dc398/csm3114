@@ -23,35 +23,42 @@ class _HomePageState extends State<HomePage> {
   double navElevation = 3;
 
   Widget addTaskButton() => FloatingActionButton(
-    onPressed: () async {
-      setState(() => navElevation = 1);
-      await showModalBottomSheet(
-        isScrollControlled: true,
-        context: context,
-        builder: (context) => const AddTaskView(),
-      ).then((task) {
-        if (task is Task) {
-          setState(() => task.addTodo());
-        }
-      });
-      setState(() => navElevation = 3);
-    },
-    child: const Icon(Icons.add),
-  );
-
+        // https://stackoverflow.com/questions/54515186
+        onPressed: () async {
+          setState(() => navElevation = 1);
+          // https://stackoverflow.com/questions/53869078
+          await showModalBottomSheet(
+            isScrollControlled: true,
+            context: context,
+            builder: (context) => const AddTaskView(),
+          ).then((task) {
+            if (task is Task) {
+              setState(() => task.addTodo());
+            }
+          });
+          setState(() => navElevation = 3);
+        },
+        child: const Icon(Icons.add),
+      );
 
   @override
   Widget build(BuildContext context) {
+    // https://api.flutter.dev/flutter/material/NavigationBar/backgroundColor.html
     final ColorScheme scheme = Theme.of(context).colorScheme;
     Color navColor = ElevationOverlay.applySurfaceTint(
-        scheme.surface, scheme.primary, navElevation);
+      scheme.surface,
+      scheme.primary,
+      navElevation,
+    );
 
     final ScaffoldMessengerState mState = ScaffoldMessenger.of(context);
 
     return Scaffold(
       appBar: AppBar(
         systemOverlayStyle: SystemUiOverlayStyle(
+          // https://stackoverflow.com/questions/51012360
           systemNavigationBarColor: navColor,
+          // https://stackoverflow.com/questions/55211640
           statusBarColor: Colors.transparent,
           statusBarBrightness: Brightness.light,
         ),
@@ -60,21 +67,25 @@ class _HomePageState extends State<HomePage> {
       ),
       // ignore: prefer_const_constructors
       body: <Widget>[StarTasksView(), TasksView()][pageIndex],
-      floatingActionButton: kReleaseMode ? addTaskButton() : InkWell(
-        // demo purposes
-        onLongPress: () async {
-          await Data.dummy();
-          setState(() {});
-          snack(mState, 'DEBUG: DUMMY DATA ADDED');
-        },
-        onDoubleTap: () async {
-          await Data.nuke();
-          setState(() {});
-          snack(mState, 'DEBUG: BOOM');
-        },
-        // add task
-        child: addTaskButton(),
-      ),
+      // https://stackoverflow.com/questions/73669989
+      floatingActionButton: kReleaseMode
+          ? addTaskButton()
+          : InkWell(
+              // demo purposes
+              onLongPress: () async {
+                await Data.dummy();
+                setState(() {});
+                snack(mState, 'DEBUG: DUMMY DATA ADDED');
+              },
+              onDoubleTap: () async {
+                await Data.nuke();
+                setState(() {});
+                snack(mState, 'DEBUG: BOOM');
+              },
+              // add task
+              child: addTaskButton(),
+            ),
+      // https://api.flutter.dev/flutter/material/NavigationBar-class.html
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
           mState.removeCurrentSnackBar();

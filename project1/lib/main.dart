@@ -4,6 +4,7 @@ import 'data.dart';
 import 'view_home.dart';
 
 void main() async {
+  // https: //stackoverflow.com/questions/65141485
   WidgetsFlutterBinding.ensureInitialized();
   await Data.load();
   runApp(const TaskApp());
@@ -15,9 +16,9 @@ class TaskApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-    title: 'To Do',
-    darkTheme: ThemeData.dark(),
-    home: const HomePage(),
+      title: 'To Do',
+      darkTheme: ThemeData.dark(),
+      home: const HomePage(),
     );
   }
 }

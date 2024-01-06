@@ -37,6 +37,8 @@ class _AddTaskViewState extends State<AddTaskView> {
   @override
   Widget build(BuildContext context) {
     final NavigatorState navigator = Navigator.of(context);
+
+    // https://stackoverflow.com/questions/53869078
     final MediaQueryData mediaQuery = MediaQuery.of(context);
     final double keyboardPadding = max(mediaQuery.viewInsets.bottom - 24, 0);
 

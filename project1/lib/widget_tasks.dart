@@ -80,10 +80,13 @@ class TasksViewState extends State<TasksView> {
               ],
             ),
           )
+        // https://stackoverflow.com/questions/60314623
         : SingleChildScrollView(
             child: Column(
               children: [
                 ListView.builder(
+                  // not sure why, but it works
+                  // https://stackoverflow.com/questions/62927579
                   physics: const ClampingScrollPhysics(),
                   shrinkWrap: true,
                   itemCount: todos.length,
@@ -110,6 +113,7 @@ class TasksViewState extends State<TasksView> {
                       },
                       child: Dismissible(
                         key: UniqueKey(),
+                        // https://stackoverflow.com/questions/55777213
                         confirmDismiss: (direction) async {
                           if (direction == DismissDirection.startToEnd) {
                             todos[i].flipStar();
@@ -164,6 +168,7 @@ class TasksViewState extends State<TasksView> {
                 // done list
                 Visibility(
                   visible: done.isNotEmpty,
+                  // https://api.flutter.dev/flutter/material/ExpansionTile-class.html
                   child: ExpansionTile(
                     shape: const Border(),
                     tilePadding: const EdgeInsets.symmetric(horizontal: 32),
