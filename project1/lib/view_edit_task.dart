@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+import 'data.dart';
 import 'model_task.dart';
 import 'widget_set_datetime.dart';
 
@@ -26,13 +27,14 @@ class _EditTaskPageState extends State<EditTaskPage> {
   final GlobalKey<FormState> _key = GlobalKey<FormState>();
   List<Widget> partDeadline = <Widget>[];
 
-  void updateTodo() {
+  Future<void> updateTodo() async {
     if (_key.currentState!.validate()) {
       _key.currentState!.save();
       Task.sortTodos();
       if (widget.refreshParent != null) {
         widget.refreshParent!();
       }
+      await Data.save();
     }
   }
 
@@ -123,7 +125,7 @@ class _EditTaskPageState extends State<EditTaskPage> {
 
 // https://stackoverflow.com/questions/58522998
 class _FormSaveWrapper extends StatelessWidget {
-  final Function onFocusChange;
+  final Future<void> Function() onFocusChange;
   final Widget child;
 
   const _FormSaveWrapper({required this.onFocusChange, required this.child});
@@ -133,8 +135,8 @@ class _FormSaveWrapper extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: FocusScope(
-        onFocusChange: (value) {
-          if (!value) onFocusChange();
+        onFocusChange: (value) async {
+          if (!value) await onFocusChange();
         },
         child: child,
       ),
