@@ -1,5 +1,9 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:haulier/view_location.dart';
 
 import 'data.dart';
@@ -22,16 +26,19 @@ class _SchedulePageState extends State<SchedulePage> {
     'details': '',
     'dateStart': '',
     'dateEnd': '',
-    'posStart': {'coordinates': <double>[]},
-    'posEnd': {'coordinates': <double>[]},
+    'posStart': null,
+    'posEnd': null,
+    'posNow': null,
   };
   Map<String, dynamic> _response = {};
   String details = '',
+      dateStart = 'Start Date',
+      dateEnd = 'End Date',
       posStart = 'Start',
       posEnd = 'Destination',
-      dateStart = 'Start Date',
-      dateEnd = 'End Date';
+      posNow = '';
   Future<String>? status;
+  Timer? locationSpammer;
 
   String? getErrorMessage(String key) {
     String? message;
@@ -43,37 +50,82 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   Future<String> getPosName(String key) async {
-    List<dynamic> pos = _body[key]['coordinates'];
-    List<Placemark> places = await placemarkFromCoordinates(
-      pos[1] as double,
-      pos[0] as double,
-    );
-    Map<String, dynamic> place = places[0].toJson();
-    return place.toString();
+    String location = '-';
+    if (_body[key] != null) {
+      List<dynamic> pos = _body[key]['coordinates'];
+      List<Placemark> places = await placemarkFromCoordinates(
+        pos[1] as double,
+        pos[0] as double,
+      );
+      Map<String, dynamic> place = places[0].toJson();
+      location = place.toString();
+    }
+    return location;
   }
 
   String getDate(String key) {
     return ((_body[key] as String).isEmpty) ? 'Start Date' : _body[key];
   }
 
+  Future<void> setPosNow() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+    if ([LocationPermission.always, LocationPermission.whileInUse]
+        .contains(permission)) {
+      Position current = await Geolocator.getCurrentPosition();
+      _body['posNow'] = {
+        'coordinates': [current.longitude, current.latitude]
+      };
+    } else {
+      _body['posNow'] = _body['posStart'];
+    }
+    posNow = await getPosName('posNow');
+    _response = await Data.updateSchedule(widget.editSchedule!['id'], _body);
+    setState(() {});
+    if (kDebugMode) {
+      print('DEBUG: set position to ${_body['posNow']}');
+    }
+  }
+
   Future<void> checkBody() async {
     if (widget.editSchedule == null) return;
     _body = Map.from(widget.editSchedule!);
     details = _body['details'];
-    posStart = await getPosName('posStart');
-    posEnd = await getPosName('posEnd');
     dateStart = getDate('dateStart');
     dateEnd = getDate('dateEnd');
-    print(_body);
+    posStart = await getPosName('posStart');
+    posEnd = await getPosName('posEnd');
+    posNow = await getPosName('posNow');
+    setPosNow();
     setState(() {});
   }
 
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      checkBody();
+      bool locationOn = await Geolocator.isLocationServiceEnabled();
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (locationOn && permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      } else if (!locationOn ||
+          permission == LocationPermission.deniedForever) {
+        if (kDebugMode) {
+          print('DEBUG: No location permission');
+        }
+      } else {
+        locationSpammer = Timer.periodic(
+          const Duration(seconds: 10),
+          (timer) => setPosNow(),
+        );
+        checkBody();
+      }
     });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    locationSpammer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -102,24 +154,45 @@ class _SchedulePageState extends State<SchedulePage> {
           key: _formKey,
           child: Column(
             children: [
-              DropdownButton<String>(
-                value: _body['truck'],
-                icon: const Icon(Icons.arrow_downward),
-                elevation: 16,
-                style: const TextStyle(color: Colors.deepPurple),
-                underline: Container(
-                  height: 2,
-                  color: Colors.deepPurpleAccent,
+              if (!add)
+                DropdownButtonFormField<String>(
+                  value: _body['status'],
+                  items: ['scheduled', 'started', 'finished', 'cancelled']
+                      .map<DropdownMenuItem<String>>((e) =>
+                          DropdownMenuItem<String>(value: e, child: Text(e)))
+                      .toList(),
+                  onChanged: (String? value) async {
+                    _body['status'] = value!;
+                    if (_body['status'] == 'started') {
+                      _body['posNow'] = _body['posStart'];
+                      locationSpammer = Timer.periodic(
+                        const Duration(seconds: 10),
+                        (timer) => setPosNow(),
+                      );
+                    } else {
+                      locationSpammer?.cancel();
+                      if (_body['status'] == 'finished') {
+                        _body['posNow'] = _body['posEnd'];
+                      } else {
+                        _body['posNow'] = null;
+                      }
+                    }
+                    posNow = await getPosName('posNow');
+                    setState(() {});
+                  },
                 ),
-                onChanged: (String? value) {
-                  setState(() => _body['truck'] = value!);
-                },
-                items: Data.trucks.map<DropdownMenuItem<String>>((e) {
-                  return DropdownMenuItem<String>(
-                    value: e['id'],
-                    child: Text(e['plate']),
-                  );
-                }).toList(),
+              DropdownButtonFormField<String>(
+                value: _body['truck'],
+                items: Data.trucks
+                    .map<DropdownMenuItem<String>>((e) =>
+                        DropdownMenuItem<String>(
+                            value: e['id'], child: Text(e['plate'])))
+                    .toList(),
+                onChanged: (_body['status'] == 'scheduled')
+                    ? (String? value) {
+                        setState(() => _body['truck'] = value!);
+                      }
+                    : null,
               ),
               TextFormField(
                 key: Key('start@$details'),
@@ -137,39 +210,33 @@ class _SchedulePageState extends State<SchedulePage> {
                 readOnly: true,
                 onTap: () async {
                   DateTime? picked = DateTime.tryParse(_body['dateStart']);
-                  final DateTime now = DateTime.now();
-
+                  final DateTime dateNow = DateTime.now();
                   DateTime? dateTime = await showDatePicker(
                     context: context,
-                    initialDate: picked ?? now,
-                    firstDate: picked ?? now,
-                    lastDate: now.copyWith(year: now.year + 1),
+                    initialDate: picked ?? dateNow,
+                    firstDate: picked ?? dateNow,
+                    lastDate: dateNow.copyWith(year: dateNow.year + 1),
                   );
                   if (dateTime != null && context.mounted) {
-                    TimeOfDay now = (picked != null)
+                    TimeOfDay timeNow = (picked != null)
                         ? TimeOfDay.fromDateTime(picked)
                         : TimeOfDay.now();
                     TimeOfDay? time = await showTimePicker(
                       context: context,
-                      initialTime: now,
+                      initialTime: timeNow,
                     );
-                    if (time != null) {
-                      dateTime = dateTime.add(
-                        Duration(
-                          hours: time.hour,
-                          minutes: time.minute,
-                        ),
-                      );
-                    }
+                    if (time == null) return;
+                    dateTime = dateTime.add(
+                      Duration(
+                        hours: time.hour,
+                        minutes: time.minute,
+                      ),
+                    );
                   }
                   setState(() {
-                    if (dateTime != null) {
-                      _body['dateStart'] = dateTime.toString();
-                      dateStart = dateTime.toString();
-                    } else {
-                      _body['dateStart'] = '';
-                      dateStart = 'Start Date';
-                    }
+                    bool hasPicked = dateTime != null;
+                    dateStart = (hasPicked) ? dateTime.toString() : 'Start';
+                    _body['dateStart'] = (hasPicked) ? dateStart : '';
                   });
                 },
                 validator: (value) {
@@ -189,35 +256,34 @@ class _SchedulePageState extends State<SchedulePage> {
                 initialValue: dateEnd,
                 readOnly: true,
                 onTap: () async {
-                  DateTime? picked = DateTime.tryParse(_body['dateEnd']);
-                  final DateTime now = DateTime.now();
-
+                  DateTime? picked = DateTime.tryParse(_body['dateStart']);
+                  final DateTime dateNow = DateTime.now();
                   DateTime? dateTime = await showDatePicker(
                     context: context,
-                    initialDate: picked ?? now,
-                    firstDate: now,
-                    lastDate: now.copyWith(year: now.year + 1),
+                    initialDate: picked ?? dateNow,
+                    firstDate: picked ?? dateNow,
+                    lastDate: dateNow.copyWith(year: dateNow.year + 1),
                   );
                   if (dateTime != null && context.mounted) {
-                    TimeOfDay now = (picked != null)
+                    TimeOfDay timeNow = (picked != null)
                         ? TimeOfDay.fromDateTime(picked)
                         : TimeOfDay.now();
                     TimeOfDay? time = await showTimePicker(
                       context: context,
-                      initialTime: now,
+                      initialTime: timeNow,
                     );
-                    if (time != null) {
-                      dateTime = dateTime.add(
-                        Duration(
-                          hours: time.hour,
-                          minutes: time.minute,
-                        ),
-                      );
-                    }
+                    if (time == null) return;
+                    dateTime = dateTime.add(
+                      Duration(
+                        hours: time.hour,
+                        minutes: time.minute,
+                      ),
+                    );
                   }
                   setState(() {
-                    _body['dateEnd'] =
-                        (dateTime != null) ? dateTime.toString() : '';
+                    bool hasPicked = dateTime != null;
+                    dateEnd = (hasPicked) ? dateTime.toString() : 'End';
+                    _body['dateEnd'] = (hasPicked) ? dateEnd : '';
                   });
                 },
                 validator: (value) {
@@ -232,7 +298,7 @@ class _SchedulePageState extends State<SchedulePage> {
               ),
               // https://stackoverflow.com/questions/45900387
               TextFormField(
-                key: Key(posStart),
+                key: Key('posStart@$posStart'),
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
                 initialValue: posStart,
@@ -262,7 +328,7 @@ class _SchedulePageState extends State<SchedulePage> {
                 },
               ),
               TextFormField(
-                key: Key(posEnd),
+                key: Key('posEnd@$posEnd'),
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
                 initialValue: posEnd,
@@ -291,6 +357,26 @@ class _SchedulePageState extends State<SchedulePage> {
                   return error;
                 },
               ),
+              if (['started', 'finished'].contains(_body['status']))
+                TextFormField(
+                  key: Key('posNow@$posNow'),
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  initialValue: posNow,
+                  readOnly: true,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => LocationPickerPage(
+                        coordinates: _body['posNow'],
+                        viewOnly: true,
+                      ),
+                    ),
+                  ).then((value) async {
+                    _body['posNow'] = value;
+                    setState(() {});
+                  }),
+                ),
             ],
           ),
         ),
@@ -302,7 +388,6 @@ class _SchedulePageState extends State<SchedulePage> {
               ? await Data.addSchedule(_body)
               : await Data.updateSchedule(widget.editSchedule!['id'], _body);
           if (_formKey.currentState!.validate()) {
-            _formKey.currentState!.reset();
             if (context.mounted) {
               Navigator.pop(context);
             }

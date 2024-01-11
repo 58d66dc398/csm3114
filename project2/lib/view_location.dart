@@ -6,8 +6,13 @@ import 'package:url_launcher/url_launcher.dart';
 
 class LocationPickerPage extends StatefulWidget {
   final Map<String, dynamic>? coordinates;
+  final bool viewOnly;
 
-  const LocationPickerPage({super.key, this.coordinates});
+  const LocationPickerPage({
+    super.key,
+    this.coordinates,
+    this.viewOnly = false,
+  });
 
   @override
   State<StatefulWidget> createState() {
@@ -20,48 +25,45 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
       ? LatLng.fromJson(widget.coordinates!)
       : const LatLng(10, 0);
   double z = 5;
-  late Marker? marker = (widget.coordinates != null)
-      ? Marker(
-          point: pos,
-          child: IconButton(
-            onPressed: () {
-              setState(() {
-                marker = null;
-              });
-            },
-            icon: const Icon(Icons.location_on),
-          ),
-        )
-      : null;
+  late Marker? marker = (widget.coordinates != null) ? getMarker() : null;
+
+  Marker getMarker() {
+    return Marker(
+      point: pos,
+      child: GestureDetector(
+        onTap: (widget.viewOnly)
+            ? null
+            : () {
+                setState(() => marker = null);
+              },
+        child: const Icon(Icons.location_on),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Choose Location')),
+      appBar: AppBar(
+          title: Text('${(widget.viewOnly) ? 'Current' : 'Select'} Location')),
       body: FlutterMap(
         options: MapOptions(
+          // https://pub.dev/documentation/flutter_map/latest/flutter_map/InteractionOptions-class.html
+          interactionOptions: const InteractionOptions(
+            flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom,
+          ),
           initialCenter: pos,
           initialZoom: z,
           // https://stackoverflow.com/questions/67464084
-          onTap: (TapPosition tapPos, LatLng pos) {
-            if (kDebugMode) {
-              print('DEBUG: ${pos.toJson()}');
-            }
-            this.pos = pos;
-            setState(() {
-              marker = Marker(
-                point: pos,
-                child: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      marker = null;
-                    });
-                  },
-                  icon: const Icon(Icons.location_on),
-                ),
-              );
-            });
-          },
+          onTap: (widget.viewOnly)
+              ? null
+              : (TapPosition tapPos, LatLng pos) {
+                  if (kDebugMode) {
+                    print('DEBUG: ${pos.toJson()}');
+                  }
+                  this.pos = pos;
+                  setState(() => marker = getMarker());
+                },
         ),
         children: [
           TileLayer(
