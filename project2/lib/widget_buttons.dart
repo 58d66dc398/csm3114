@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:haulier/view_schedule.dart';
 import 'package:haulier/view_truck.dart';
-import 'package:haulier/view_location.dart';
 
 class AddTruckButton extends StatelessWidget {
   final Function refresh;
