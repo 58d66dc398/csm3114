@@ -172,6 +172,8 @@ class Data {
     return {
       'sumMiles': sum,
       'usrMiles': userSum,
+      'users': users.length,
+      'trucks': allTrucks.length,
       'avgMilesPerDriver': avgMilesPerDriver,
       'sumMileageCapacity': avgMilesPerDriver * allTrucks.length,
     };
