@@ -25,8 +25,8 @@ class _HomePageState extends State<HomePage> {
 
   Widget? getButton() {
     switch (currentPageIndex) {
-      case 0:
-        return AddTruckButton(refresh: () => setState(() {}));
+      // case 0:
+      //   return AddTruckButton(refresh: () => setState(() {}));
       case 2:
         return AddScheduleButton(refresh: () => setState(() {}));
       default:
@@ -36,10 +36,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> pageView = const [
-      TruckListView(),
-      TruckUtilView(),
-      ScheduleListView(),
+    List<Widget> pageView = [
+      TruckListView(refresh: () => setState(() {})),
+      const TruckUtilView(),
+      const ScheduleListView(),
     ];
 
     return Scaffold(

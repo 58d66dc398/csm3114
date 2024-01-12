@@ -9,13 +9,19 @@ class AddTruckButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton.extended(
+    return TextButton(
       onPressed: () => Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const TruckPage()),
       ).then((_) => refresh()),
-      label: const Text('Register Truck'),
-      icon: const Icon(Icons.add),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.add),
+          SizedBox(width: 4),
+          Text('Register Truck'),
+        ],
+      ),
     );
   }
 }
@@ -32,7 +38,7 @@ class AddScheduleButton extends StatelessWidget {
         context,
         MaterialPageRoute(builder: (_) => const SchedulePage()),
       ).then((_) => refresh()),
-      label: const Text('Add Schedule'),
+      label: const Text('Schedule'),
       icon: const Icon(Icons.add),
     );
   }
