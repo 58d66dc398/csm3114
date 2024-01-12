@@ -39,11 +39,13 @@ class _HomePageState extends State<HomePage> {
     List<Widget> pageView = [
       TruckListView(refresh: () => setState(() {})),
       const TruckUtilView(),
-      const ScheduleListView(),
+      // ignore: prefer_const_constructors
+      ScheduleListView(),
     ];
 
     return Scaffold(
       appBar: AppBar(
+        scrolledUnderElevation: 0,
         title: Text(titles[currentPageIndex]),
         centerTitle: true,
         backgroundColor: scheme.primary,

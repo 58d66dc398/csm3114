@@ -43,17 +43,34 @@ class _LoginPageState extends State<LoginPage> {
   TextFormField createFormField(
     String saveKey, {
     required String? Function(String?)? validate,
+        bool hideText = false,
     String? label,
   }) {
     return TextFormField(
       decoration: InputDecoration(labelText: label ?? saveKey.capitalize()),
       onSaved: (value) => _body[saveKey] = value!,
       validator: validate,
+      obscureText: hideText,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    if (Data.isLoggedIn()) {
+      // https://stackoverflow.com/questions/54846280
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await pb.collection('users').authRefresh();
+        await Data.loadTrucks();
+        await Data.loadSchedules();
+        if (context.mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomePage()),
+          );
+        }
+      });
+    }
+
     var formFields = [
       Text(
         (register) ? 'Create Account' : 'Sign In',
@@ -66,6 +83,7 @@ class _LoginPageState extends State<LoginPage> {
       }),
       createFormField(
         'password',
+        hideText: true,
         validate: (_) => getErrorMessage('password'),
       ),
       Visibility(
@@ -73,6 +91,7 @@ class _LoginPageState extends State<LoginPage> {
         child: createFormField(
           'passwordConfirm',
           label: 'Confirm Password',
+          hideText: true,
           validate: (_) =>
               (register) ? getErrorMessage('passwordConfirm') : null,
         ),
@@ -115,21 +134,6 @@ class _LoginPageState extends State<LoginPage> {
       ),
       Text(message),
     ];
-
-    if (Data.isLoggedIn()) {
-      // https://stackoverflow.com/questions/54846280
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await pb.collection('users').authRefresh();
-        await Data.loadTrucks();
-        await Data.loadSchedules();
-        if (context.mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomePage()),
-          );
-        }
-      });
-    }
 
     return Scaffold(
       body: Container(

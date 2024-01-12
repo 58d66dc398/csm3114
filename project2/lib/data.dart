@@ -48,7 +48,6 @@ class Data {
   static List<Map<String, dynamic>> trucks = [];
 
   static Future<void> loadTrucks() async {
-    await pb.collection("users").authRefresh();
     List<RecordModel> response = await pb
         .collection('trucks')
         .getFullList(filter: 'owner="${pb.authStore.model.id}"');
