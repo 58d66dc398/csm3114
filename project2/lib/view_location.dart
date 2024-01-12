@@ -31,12 +31,8 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
     return Marker(
       point: pos,
       child: GestureDetector(
-        onTap: (widget.viewOnly)
-            ? null
-            : () {
-                setState(() => marker = null);
-              },
-        child: const Icon(Icons.location_on),
+        onTap: (widget.viewOnly) ? null : () => setState(() => marker = null),
+        child: const Icon(Icons.location_on, color: Colors.red),
       ),
     );
   }
@@ -84,12 +80,14 @@ class _LocationPickerPageState extends State<LocationPickerPage> {
           MarkerLayer(markers: [if (marker != null) marker!]),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: (marker != null)
-            ? () => Navigator.pop(context, pos.toJson())
-            : null,
-        child: const Icon(Icons.check),
-      ),
+      floatingActionButton: (widget.viewOnly)
+          ? null
+          : FloatingActionButton(
+              onPressed: (marker != null)
+                  ? () => Navigator.pop(context, pos.toJson())
+                  : null,
+              child: const Icon(Icons.check),
+            ),
     );
   }
 }

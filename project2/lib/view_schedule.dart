@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:haulier/util.dart';
 import 'package:haulier/view_location.dart';
 
 import 'data.dart';
@@ -58,13 +59,15 @@ class _SchedulePageState extends State<SchedulePage> {
         pos[0] as double,
       );
       Map<String, dynamic> place = places[0].toJson();
-      location = place.toString();
+      location = getFancyLocationName(place);
     }
     return location;
   }
 
-  String getDate(String key) {
-    return ((_body[key] as String).isEmpty) ? 'Start Date' : _body[key];
+  String getDate(String key, String alternative) {
+    return ((_body[key] as String).isEmpty)
+        ? alternative
+        : getFancyDate(_body[key]);
   }
 
   Future<void> setPosNow() async {
@@ -91,12 +94,36 @@ class _SchedulePageState extends State<SchedulePage> {
     }
   }
 
+  String getFancyDate(String date) {
+    return yMdHm.format(DateTime.parse(date));
+  }
+
+  String getFancyLocationName(Map<String, dynamic> location) {
+    String name = '';
+    if (location['street'].contains(location['name'])) {
+      name = location['street'];
+    } else {
+      name = location['name'] + ', ' + location['street'];
+    }
+    if (location['postalCode'] != null || location['postalCode'] != '') {
+      name += ', ${location['postalCode']}';
+    }
+    if (location['administrativeArea'] != null ||
+        location['administrativeArea'] != '') {
+      name += ', ${location['administrativeArea']}';
+    }
+    if (location['country'] != null || location['country'] != '') {
+      name += ', ${location['country']}';
+    }
+    return name;
+  }
+
   Future<void> checkBody() async {
     if (widget.editSchedule == null) return;
     _body = Map.from(widget.editSchedule!);
     details = _body['details'];
-    dateStart = getDate('dateStart');
-    dateEnd = getDate('dateEnd');
+    dateStart = getDate('dateStart', 'Start Date');
+    dateEnd = getDate('dateEnd', 'End Date');
     posStart = await getPosName('posStart');
     posEnd = await getPosName('posEnd');
     posNow = await getPosName('posNow');
@@ -160,151 +187,182 @@ class _SchedulePageState extends State<SchedulePage> {
           key: _formKey,
           child: Column(
             children: [
-              if (!add)
-                DropdownButtonFormField<String>(
-                  value: _body['status'],
-                  items: ['scheduled', 'started', 'finished', 'cancelled']
-                      .map<DropdownMenuItem<String>>((e) =>
-                          DropdownMenuItem<String>(value: e, child: Text(e)))
-                      .toList(),
-                  onChanged: (String? value) async {
-                    _body['status'] = value!;
-                    if (_body['status'] == 'started') {
-                      _body['posNow'] = _body['posStart'];
-                      locationSpammer = Timer.periodic(
-                        const Duration(seconds: 10),
-                        (timer) => setPosNow(),
-                      );
-                    } else {
-                      locationSpammer?.cancel();
-                      if (_body['status'] == 'finished') {
-                        _body['posNow'] = _body['posEnd'];
-                      } else {
-                        _body['posNow'] = null;
-                      }
-                    }
-                    posNow = await getPosName('posNow');
-                    setState(() {});
-                  },
-                ),
-              DropdownButtonFormField<String>(
-                value: _body['truck'],
-                items: Data.trucks
-                    .map<DropdownMenuItem<String>>((e) =>
-                        DropdownMenuItem<String>(
-                            value: e['id'], child: Text(e['plate'])))
-                    .toList(),
-                onChanged: (_body['status'] == 'scheduled')
-                    ? (String? value) {
-                        setState(() => _body['truck'] = value!);
-                      }
-                    : null,
-              ),
-              TextFormField(
-                key: Key('start@$details'),
-                decoration: const InputDecoration(labelText: 'Details'),
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                initialValue: details,
-                onSaved: (value) => _body['details'] = value!,
-              ),
-              TextFormField(
-                key: Key('start@$dateStart'),
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                initialValue: dateStart,
-                readOnly: true,
-                onTap: () async {
-                  DateTime? picked = DateTime.tryParse(_body['dateStart']);
-                  final DateTime dateNow = DateTime.now();
-                  DateTime? dateTime = await showDatePicker(
-                    context: context,
-                    initialDate: picked ?? dateNow,
-                    firstDate: picked ?? dateNow,
-                    lastDate: dateNow.copyWith(year: dateNow.year + 1),
-                  );
-                  if (dateTime != null && context.mounted) {
-                    TimeOfDay timeNow = (picked != null)
-                        ? TimeOfDay.fromDateTime(picked)
-                        : TimeOfDay.now();
-                    TimeOfDay? time = await showTimePicker(
-                      context: context,
-                      initialTime: timeNow,
-                    );
-                    if (time == null) return;
-                    dateTime = dateTime.add(
-                      Duration(
-                        hours: time.hour,
-                        minutes: time.minute,
+              Row(
+                children: [
+                  if (!add)
+                    Flexible(
+                      child: DropdownButtonFormField<String>(
+                        decoration: const InputDecoration(labelText: 'Status'),
+                        value: _body['status'],
+                        items: ['scheduled', 'started', 'finished', 'cancelled']
+                            .map<DropdownMenuItem<String>>((e) =>
+                                DropdownMenuItem<String>(
+                                    value: e, child: Text(e)))
+                            .toList(),
+                        onChanged: (String? value) async {
+                          _body['status'] = value!;
+                          if (_body['status'] == 'started') {
+                            _body['posNow'] = _body['posStart'];
+                            locationSpammer = Timer.periodic(
+                              const Duration(seconds: 10),
+                              (timer) => setPosNow(),
+                            );
+                          } else {
+                            locationSpammer?.cancel();
+                            if (_body['status'] == 'finished') {
+                              _body['posNow'] = _body['posEnd'];
+                            } else {
+                              _body['posNow'] = null;
+                            }
+                          }
+                          posNow = await getPosName('posNow');
+                          setState(() {});
+                        },
                       ),
-                    );
-                  }
-                  setState(() {
-                    bool hasPicked = dateTime != null;
-                    dateStart = (hasPicked) ? dateTime.toString() : 'Start';
-                    _body['dateStart'] = (hasPicked) ? dateStart : '';
-                  });
-                },
-                validator: (value) {
-                  String? error;
-                  if (value == 'Start Date') {
-                    error = 'No Date?';
-                  } else {
-                    error = getErrorMessage('dateStart');
-                  }
-                  return error;
-                },
+                    ),
+                  Flexible(
+                    child: DropdownButtonFormField<String>(
+                      decoration:
+                          const InputDecoration(labelText: 'Truck Plate No.'),
+                      value: _body['truck'],
+                      items: Data.trucks
+                          .map<DropdownMenuItem<String>>((e) =>
+                              DropdownMenuItem<String>(
+                                  value: e['id'], child: Text(e['plate'])))
+                          .toList(),
+                      onChanged: (_body['status'] == 'scheduled')
+                          ? (String? value) {
+                              setState(() => _body['truck'] = value!);
+                            }
+                          : null,
+                    ),
+                  ),
+                ],
               ),
-              TextFormField(
-                key: Key('end@$dateEnd'),
-                maxLines: null,
-                keyboardType: TextInputType.multiline,
-                initialValue: dateEnd,
-                readOnly: true,
-                onTap: () async {
-                  DateTime? picked = DateTime.tryParse(_body['dateStart']);
-                  final DateTime dateNow = DateTime.now();
-                  DateTime? dateTime = await showDatePicker(
-                    context: context,
-                    initialDate: picked ?? dateNow,
-                    firstDate: picked ?? dateNow,
-                    lastDate: dateNow.copyWith(year: dateNow.year + 1),
-                  );
-                  if (dateTime != null && context.mounted) {
-                    TimeOfDay timeNow = (picked != null)
-                        ? TimeOfDay.fromDateTime(picked)
-                        : TimeOfDay.now();
-                    TimeOfDay? time = await showTimePicker(
-                      context: context,
-                      initialTime: timeNow,
-                    );
-                    if (time == null) return;
-                    dateTime = dateTime.add(
-                      Duration(
-                        hours: time.hour,
-                        minutes: time.minute,
-                      ),
-                    );
-                  }
-                  setState(() {
-                    bool hasPicked = dateTime != null;
-                    dateEnd = (hasPicked) ? dateTime.toString() : 'End';
-                    _body['dateEnd'] = (hasPicked) ? dateEnd : '';
-                  });
-                },
-                validator: (value) {
-                  String? error;
-                  if (value == 'End Date') {
-                    error = 'No Date?';
-                  } else {
-                    error = getErrorMessage('dateEnd');
-                  }
-                  return error;
-                },
+              Row(
+                children: [
+                  Flexible(
+                    child: TextFormField(
+                      key: Key('start@$dateStart'),
+                      decoration:
+                          const InputDecoration(labelText: 'Start Date'),
+                      maxLines: null,
+                      keyboardType: TextInputType.multiline,
+                      initialValue: dateStart,
+                      readOnly: true,
+                      onTap: (_body['status'] == 'scheduled')
+                          ? () async {
+                              DateTime? picked =
+                                  DateTime.tryParse(_body['dateStart']);
+                              final DateTime dateNow = DateTime.now();
+                              DateTime? dateTime = await showDatePicker(
+                                context: context,
+                                initialDate: picked ?? dateNow,
+                                firstDate: picked ?? dateNow,
+                                lastDate:
+                                    dateNow.copyWith(year: dateNow.year + 1),
+                              );
+                              if (dateTime != null && context.mounted) {
+                                TimeOfDay timeNow = (picked != null)
+                                    ? TimeOfDay.fromDateTime(picked)
+                                    : TimeOfDay.now();
+                                TimeOfDay? time = await showTimePicker(
+                                  context: context,
+                                  initialTime: timeNow,
+                                );
+                                if (time == null) return;
+                                dateTime = dateTime.add(
+                                  Duration(
+                                    hours: time.hour,
+                                    minutes: time.minute,
+                                  ),
+                                );
+                              }
+                              setState(() {
+                                bool hasPicked = dateTime != null;
+                                _body['dateStart'] =
+                                    (hasPicked) ? dateTime.toString() : '';
+                                dateStart = (hasPicked)
+                                    ? yMdHm.format(dateTime)
+                                    : 'Start Date';
+                              });
+                            }
+                          : null,
+                      validator: (value) {
+                        String? error;
+                        if (value == 'Start Date') {
+                          error = 'No Date?';
+                        } else {
+                          error = getErrorMessage('dateStart');
+                        }
+                        return error;
+                      },
+                    ),
+                  ),
+                  Flexible(
+                    child: TextFormField(
+                      key: Key('end@$dateEnd'),
+                      decoration: const InputDecoration(labelText: 'End Date'),
+                      maxLines: null,
+                      keyboardType: TextInputType.multiline,
+                      initialValue: dateEnd,
+                      readOnly: true,
+                      onTap: (_body['status'] == 'scheduled')
+                          ? () async {
+                              DateTime? picked =
+                                  DateTime.tryParse(_body['dateStart']);
+                              final DateTime dateNow = DateTime.now();
+                              DateTime? dateTime = await showDatePicker(
+                                context: context,
+                                initialDate: picked ?? dateNow,
+                                firstDate: picked ?? dateNow,
+                                lastDate:
+                                    dateNow.copyWith(year: dateNow.year + 1),
+                              );
+                              if (dateTime != null && context.mounted) {
+                                TimeOfDay timeNow = (picked != null)
+                                    ? TimeOfDay.fromDateTime(picked)
+                                    : TimeOfDay.now();
+                                TimeOfDay? time = await showTimePicker(
+                                  context: context,
+                                  initialTime: timeNow,
+                                );
+                                if (time == null) return;
+                                dateTime = dateTime.add(
+                                  Duration(
+                                    hours: time.hour,
+                                    minutes: time.minute,
+                                  ),
+                                );
+                              }
+                              setState(() {
+                                bool hasPicked = dateTime != null;
+                                _body['dateEnd'] =
+                                    (hasPicked) ? dateTime.toString() : '';
+                                dateEnd = (hasPicked)
+                                    ? yMdHm.format(dateTime)
+                                    : 'End Date';
+                              });
+                            }
+                          : null,
+                      validator: (value) {
+                        String? error;
+                        if (value == 'End Date') {
+                          error = 'No Date?';
+                        } else {
+                          error = getErrorMessage('dateEnd');
+                        }
+                        return error;
+                      },
+                    ),
+                  )
+                ],
               ),
               // https://stackoverflow.com/questions/45900387
               TextFormField(
                 key: Key('posStart@$posStart'),
+                decoration:
+                    const InputDecoration(labelText: 'Starting Location'),
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
                 initialValue: posStart,
@@ -314,6 +372,7 @@ class _SchedulePageState extends State<SchedulePage> {
                   MaterialPageRoute(
                     builder: (_) => LocationPickerPage(
                       coordinates: _body['posStart'],
+                      viewOnly: _body['status'] != 'scheduled',
                     ),
                   ),
                 ).then((value) async {
@@ -335,6 +394,7 @@ class _SchedulePageState extends State<SchedulePage> {
               ),
               TextFormField(
                 key: Key('posEnd@$posEnd'),
+                decoration: const InputDecoration(labelText: 'Destination'),
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
                 initialValue: posEnd,
@@ -344,6 +404,7 @@ class _SchedulePageState extends State<SchedulePage> {
                   MaterialPageRoute(
                     builder: (_) => LocationPickerPage(
                       coordinates: _body['posEnd'],
+                      viewOnly: _body['status'] != 'scheduled',
                     ),
                   ),
                 ).then((value) async {
@@ -363,9 +424,11 @@ class _SchedulePageState extends State<SchedulePage> {
                   return error;
                 },
               ),
-              if (['started', 'finished'].contains(_body['status']))
+              if (_body['status'] == 'started')
                 TextFormField(
                   key: Key('posNow@$posNow'),
+                  decoration:
+                      const InputDecoration(labelText: 'Current Location'),
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
                   initialValue: posNow,
@@ -379,12 +442,20 @@ class _SchedulePageState extends State<SchedulePage> {
                       ),
                     ),
                   ).then((value) async {
-                    if (value!=null) {
+                    if (value != null) {
                       _body['posNow'] = value;
                       setState(() {});
                     }
                   }),
                 ),
+              TextFormField(
+                key: Key('start@$details'),
+                decoration: const InputDecoration(labelText: 'Details'),
+                maxLines: null,
+                keyboardType: TextInputType.multiline,
+                initialValue: details,
+                onSaved: (value) => _body['details'] = value!,
+              ),
             ],
           ),
         ),

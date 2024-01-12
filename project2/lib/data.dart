@@ -31,6 +31,10 @@ class Data {
     return response;
   }
 
+  static void revokeUser() {
+    pb.authStore.clear();
+  }
+
   static Future<Map<String, dynamic>> addUser(Map<String, dynamic> body) async {
     Map<String, dynamic> response = {};
     try {
@@ -42,6 +46,21 @@ class Data {
     if (kDebugMode) {
       print('DEBUG: $response');
     }
+    return response;
+  }
+
+  static Future<Map<String, dynamic>> updateUser(
+      String id, Map<String, dynamic> body) async {
+    Map<String, dynamic> response = {};
+    try {
+      RecordModel rm = await pb.collection('users').update(id, body: body);
+      response = rm.data;
+    } on ClientException catch (e) {
+      response = e.response;
+    }
+    // if (kDebugMode) {
+    //   print('DEBUG: $response');
+    // }
     return response;
   }
 

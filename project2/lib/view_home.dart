@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:haulier/view_login.dart';
+import 'package:haulier/view_user.dart';
 import 'package:haulier/widget_buttons.dart';
 import 'package:haulier/widget_schedules.dart';
 import 'package:haulier/widget_statistic.dart';
@@ -45,6 +46,15 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const UserPage()),
+            );
+          },
+          icon: const Icon(Icons.person),
+        ),
         scrolledUnderElevation: 0,
         title: Text(titles[currentPageIndex]),
         centerTitle: true,
