@@ -25,10 +25,7 @@ class _ScheduleListViewState extends State<ScheduleListView> {
             MaterialPageRoute(
               builder: (_) => SchedulePage(editSchedule: Data.schedules[index]),
             ),
-          ).then((value) async {
-            await Data.loadSchedules();
-            setState(() {});
-          }),
+          ).then((value) => setState(() {})),
         );
       },
     );

@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart';
 
-const String uri = 'c3114p2-default-rtdb.asia-southeast1.firebasedatabase.app';
-const Map<String, String> headers = {'Content-Type': 'application/json'};
-
 class _Data {
+  static String uri = 'c3114p2-default-rtdb.asia-southeast1.firebasedatabase.app';
+  static Map<String, String> headers = {'Content-Type': 'application/json'};
+
   static Future<String> addUser(Map<String, String> data) async {
     // https://stackoverflow.com/questions/61276701
     final queryFilter = {

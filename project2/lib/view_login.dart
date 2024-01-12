@@ -4,6 +4,13 @@ import 'package:haulier/view_home.dart';
 
 import 'data.dart';
 
+// https://stackoverflow.com/questions/29628989
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
+  }
+}
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -33,12 +40,86 @@ class _LoginPageState extends State<LoginPage> {
     return message;
   }
 
+  TextFormField createFormField(
+    String saveKey, {
+    required String? Function(String?)? validate,
+    String? label,
+  }) {
+    return TextFormField(
+      decoration: InputDecoration(labelText: label ?? saveKey.capitalize()),
+      onSaved: (value) => _body[saveKey] = value!,
+      validator: validate,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    var formFields = [
+      Text(
+        (register) ? 'Create Account' : 'Sign In',
+        style: Theme.of(context).textTheme.headlineLarge,
+      ),
+      createFormField('username', validate: (value) {
+        return (_body['username'] == '')
+            ? 'Cannot be Blank.'
+            : getErrorMessage((register) ? 'username' : 'identity');
+      }),
+      createFormField(
+        'password',
+        validate: (_) => getErrorMessage('password'),
+      ),
+      Visibility(
+        visible: register,
+        child: createFormField(
+          'passwordConfirm',
+          label: 'Confirm Password',
+          validate: (_) =>
+              (register) ? getErrorMessage('passwordConfirm') : null,
+        ),
+      ),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Switch(
+            value: register,
+            onChanged: (value) => setState(() => register = !register),
+          ),
+          const SizedBox(width: 8),
+          const Text('New User?'),
+          const Spacer(),
+          ElevatedButton(
+            onPressed: () async {
+              message = '';
+              _formKey.currentState!.save();
+              _response = (register)
+                  ? await Data.addUser(_body)
+                  : await Data.authUser(_body);
+              if (_formKey.currentState!.validate()) {
+                if (register) {
+                  _formKey.currentState!.reset();
+                  message = 'Successfully created account.';
+                } else {
+                  if (_response['code'] != 200 && _response.isNotEmpty) {
+                    message = _response['message'];
+                  }
+                }
+                if (kDebugMode) {
+                  print('DEBUG : $message');
+                }
+              }
+              setState(() {});
+            },
+            child: Text((register) ? 'Register' : 'Login'),
+          ),
+        ],
+      ),
+      Text(message),
+    ];
+
     if (Data.isLoggedIn()) {
       // https://stackoverflow.com/questions/54846280
       WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await pb.collection("users").authRefresh();
+        await pb.collection('users').authRefresh();
         await Data.loadTrucks();
         await Data.loadSchedules();
         if (context.mounted) {
@@ -59,78 +140,7 @@ class _LoginPageState extends State<LoginPage> {
           child: Wrap(
             alignment: WrapAlignment.center,
             runSpacing: 16,
-            children: [
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Username'),
-                validator: (value) {
-                  String? error;
-                  if (_body['username'] == '') {
-                    error = 'Cannot be Blank.';
-                  } else {
-                    error = (register)
-                        ? getErrorMessage('username')
-                        : getErrorMessage('identity');
-                  }
-                  return error;
-                },
-                onSaved: (value) => _body['username'] = value!,
-              ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Password'),
-                validator: (_) => getErrorMessage('password'),
-                onSaved: (value) => _body['password'] = value!,
-              ),
-              TextFormField(
-                decoration:
-                    const InputDecoration(labelText: 'Confirm Password'),
-                validator: (_) =>
-                    (register) ? getErrorMessage('passwordConfirm') : null,
-                onSaved: (value) => _body['passwordConfirm'] = value!,
-              ),
-              ButtonBar(
-                alignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(
-                    onPressed: () async {
-                      message = '';
-                      register = false;
-                      _formKey.currentState!.save();
-                      _response = await Data.authUser(_body);
-                      if (_formKey.currentState!.validate()) {
-                        if (_response['code'] == 200) {
-                          _formKey.currentState!.reset();
-                        } else if (_response.isNotEmpty) {
-                          message = _response['message'];
-                          if (kDebugMode) {
-                            print('DEBUG: $message');
-                          }
-                        }
-                      }
-                      setState(() {});
-                    },
-                    child: const Text('Login'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      message = '';
-                      register = true;
-                      _formKey.currentState!.save();
-                      _response = await Data.addUser(_body);
-                      if (_formKey.currentState!.validate()) {
-                        _formKey.currentState!.reset();
-                        message = 'Successfully created account.';
-                        if (kDebugMode) {
-                          print('DEBUG: $message');
-                        }
-                      }
-                      setState(() {});
-                    },
-                    child: const Text('Register'),
-                  ),
-                ],
-              ),
-              Text(message),
-            ],
+            children: formFields,
           ),
         ),
       ),

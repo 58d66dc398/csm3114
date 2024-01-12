@@ -82,9 +82,9 @@ class _TruckPageState extends State<TruckPage> {
           _formKey.currentState!.save();
           _response = (register)
               ? await Data.addTruck(_body)
-              : await Data.updateSchedule(widget.editTruck!['id'], _body);
+              : await Data.updateTruck(widget.editTruck!['id'], _body);
           if (_formKey.currentState!.validate()) {
-            _formKey.currentState!.reset();
+            await Data.loadTrucks();
             if (context.mounted) {
               Navigator.pop(context);
             }

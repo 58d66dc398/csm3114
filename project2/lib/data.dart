@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 final pb = PocketBase('http://10.0.2.2:8090');
@@ -68,9 +69,9 @@ class Data {
     } on ClientException catch (e) {
       response = e.response;
     }
-    if (kDebugMode) {
-      print('DEBUG: $response');
-    }
+    // if (kDebugMode) {
+    //   print('DEBUG: $response');
+    // }
     return response;
   }
 
@@ -83,9 +84,9 @@ class Data {
     } on ClientException catch (e) {
       response = e.response;
     }
-    if (kDebugMode) {
-      print('DEBUG: $response');
-    }
+    // if (kDebugMode) {
+    //   print('DEBUG: $response');
+    // }
     return response;
   }
 
@@ -117,9 +118,9 @@ class Data {
     } on ClientException catch (e) {
       response = e.response;
     }
-    if (kDebugMode) {
-      print('DEBUG: $response');
-    }
+    // if (kDebugMode) {
+    //   print('DEBUG: $response');
+    // }
     return response;
   }
 
@@ -132,9 +133,9 @@ class Data {
     } on ClientException catch (e) {
       response = e.response;
     }
-    if (kDebugMode) {
-      print('DEBUG: $response');
-    }
+    // if (kDebugMode) {
+    //   print('DEBUG: $response');
+    // }
     return response;
   }
 
@@ -142,4 +143,38 @@ class Data {
     await pb.collection('schedules').delete(id);
   }
 
+  static Future<List<Map<String, dynamic>>> getAll(String key) async =>
+      (await pb.collection('schedules').getFullList())
+          .map((e) => e.toJson())
+          .toList();
+
+  // https://www.ddcfpo.com/freight-process-insights/12-metrics-you-should-be-tracking-in-fleet-utilization
+  static Future<Map<String, dynamic>> getTruckAvgUtils() async {
+    final List<Map<String, dynamic>> allSchedules = await getAll('schedules');
+    final List<Map<String, dynamic>> allTrucks = await getAll('trucks');
+    final List<RecordModel> users = await pb.collection('users').getFullList();
+    const Distance distance = Distance();
+    double sum = 0, userSum = 0;
+    for (final Map<String, dynamic> schedule in allSchedules) {
+      if (schedule['status'] == 'finished') {
+        double km = distance.as(
+          LengthUnit.Kilometer,
+          LatLng.fromJson(schedule['posStart']),
+          LatLng.fromJson(schedule['posEnd']),
+        );
+        sum += km;
+        if (schedule['user'] == getCurrentUser()['id']) {
+          userSum += km;
+        }
+      }
+    }
+    await loadTrucks();
+    double avgMilesPerDriver = sum / users.length;
+    return {
+      'sumMiles': sum,
+      'usrMiles': userSum,
+      'avgMilesPerDriver': avgMilesPerDriver,
+      'sumMileageCapacity': avgMilesPerDriver * allTrucks.length,
+    };
+  }
 }

@@ -79,8 +79,13 @@ class _SchedulePageState extends State<SchedulePage> {
       _body['posNow'] = _body['posStart'];
     }
     posNow = await getPosName('posNow');
+
     _response = await Data.updateSchedule(widget.editSchedule!['id'], _body);
-    setState(() {});
+
+    if (context.mounted) {
+      setState(() {});
+    }
+
     if (kDebugMode) {
       print('DEBUG: set position to ${_body['posNow']}');
     }
@@ -95,7 +100,6 @@ class _SchedulePageState extends State<SchedulePage> {
     posStart = await getPosName('posStart');
     posEnd = await getPosName('posEnd');
     posNow = await getPosName('posNow');
-    setPosNow();
     setState(() {});
   }
 
@@ -112,11 +116,13 @@ class _SchedulePageState extends State<SchedulePage> {
           print('DEBUG: No location permission');
         }
       } else {
-        locationSpammer = Timer.periodic(
-          const Duration(seconds: 10),
-          (timer) => setPosNow(),
-        );
         checkBody();
+        if (_body['status'] == 'started') {
+          locationSpammer = Timer.periodic(
+            const Duration(seconds: 10),
+            (timer) => setPosNow(),
+          );
+        }
       }
     });
     super.initState();
@@ -373,8 +379,10 @@ class _SchedulePageState extends State<SchedulePage> {
                       ),
                     ),
                   ).then((value) async {
-                    _body['posNow'] = value;
-                    setState(() {});
+                    if (value!=null) {
+                      _body['posNow'] = value;
+                      setState(() {});
+                    }
                   }),
                 ),
             ],
@@ -388,6 +396,7 @@ class _SchedulePageState extends State<SchedulePage> {
               ? await Data.addSchedule(_body)
               : await Data.updateSchedule(widget.editSchedule!['id'], _body);
           if (_formKey.currentState!.validate()) {
+            await Data.loadSchedules();
             if (context.mounted) {
               Navigator.pop(context);
             }
