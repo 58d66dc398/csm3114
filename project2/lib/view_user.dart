@@ -14,6 +14,7 @@ class UserPage extends StatefulWidget {
 }
 
 class _UserPageState extends State<UserPage> {
+  bool changePassword = false;
   final _formKey = GlobalKey<FormState>();
   final you = Data.getCurrentUser();
   String message = '';
@@ -58,23 +59,55 @@ class _UserPageState extends State<UserPage> {
                 },
               ),
               TextFormField(
-                decoration: const InputDecoration(labelText: 'Old Password'),
+                decoration: const InputDecoration(labelText: 'Password'),
                 obscureText: true,
-                onSaved: (value) => _body['oldPassword'] = value!,
+                onSaved: (value) {
+                  _body['oldPassword'] = value!;
+                  if (!changePassword) {
+                    _body['password'] = value;
+                    _body['passwordConfirm'] = value;
+                  }
+                },
                 validator: (_) => getErrorMessage('oldPassword'),
               ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'New Password'),
-                obscureText: true,
-                onSaved: (value) => _body['password'] = value!,
-                validator: (_) => getErrorMessage('password'),
+              Container(
+                padding: const EdgeInsets.only(top: 16),
+                child: Wrap(
+                  direction: Axis.horizontal,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 8,
+                  children: [
+                    Switch(
+                      value: changePassword,
+                      onChanged: (value) =>
+                          setState(() => changePassword = value),
+                    ),
+                    const Text('Change Password?'),
+                  ],
+                ),
               ),
-              TextFormField(
-                decoration:
-                    const InputDecoration(labelText: 'Confirm Password'),
-                obscureText: true,
-                onSaved: (value) => _body['passwordConfirm'] = value!,
-                validator: (_) => getErrorMessage('passwordConfirm'),
+              Visibility(
+                visible: changePassword,
+                child: TextFormField(
+                  decoration: const InputDecoration(labelText: 'New Password'),
+                  obscureText: true,
+                  onSaved: (changePassword)
+                      ? (value) => _body['password'] = value!
+                      : null,
+                  validator: (_) => getErrorMessage('password'),
+                ),
+              ),
+              Visibility(
+                visible: changePassword,
+                child: TextFormField(
+                  decoration:
+                      const InputDecoration(labelText: 'Confirm Password'),
+                  obscureText: true,
+                  onSaved: (changePassword)
+                      ? (value) => _body['passwordConfirm'] = value!
+                      : null,
+                  validator: (_) => getErrorMessage('passwordConfirm'),
+                ),
               ),
               Text(message),
             ],
