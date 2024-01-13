@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:haulier/util.dart';
 
 import 'data.dart';
 
@@ -34,6 +35,7 @@ class _TruckPageState extends State<TruckPage> {
 
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: getNavOverlay(Theme.of(context).canvasColor),
         title: Text((register) ? 'Register Truck' : 'Truck Info'),
         actions: [
           if (!register)

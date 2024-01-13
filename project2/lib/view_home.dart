@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:haulier/util.dart';
 import 'package:haulier/view_login.dart';
 import 'package:haulier/view_user.dart';
 import 'package:haulier/widget_buttons.dart';
@@ -20,19 +22,15 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   late final ThemeData theme = Theme.of(context);
   late final ColorScheme scheme = theme.colorScheme;
+  late Color navColor = tintColor(scheme.surface, scheme.primary, 3);
   int currentPageIndex = 1;
   final List<String> titles = ['Trucks', 'Overview', 'Schedules'];
   final Map<String, dynamic> user = Data.getCurrentUser();
 
   Widget? getButton() {
-    switch (currentPageIndex) {
-      // case 0:
-      //   return AddTruckButton(refresh: () => setState(() {}));
-      case 2:
-        return AddScheduleButton(refresh: () => setState(() {}));
-      default:
-        return null;
-    }
+    return (currentPageIndex == 2)
+        ? AddScheduleButton(refresh: () => setState(() {}))
+        : null;
   }
 
   @override
@@ -46,6 +44,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: getNavOverlay(navColor),
         leading: IconButton(
           onPressed: () {
             Navigator.push(

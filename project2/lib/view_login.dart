@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:haulier/util.dart';
 import 'package:haulier/view_home.dart';
 
 import 'data.dart';
@@ -43,7 +45,7 @@ class _LoginPageState extends State<LoginPage> {
   TextFormField createFormField(
     String saveKey, {
     required String? Function(String?)? validate,
-        bool hideText = false,
+    bool hideText = false,
     String? label,
   }) {
     return TextFormField(
@@ -136,6 +138,10 @@ class _LoginPageState extends State<LoginPage> {
     ];
 
     return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: 0,
+        systemOverlayStyle: getNavOverlay(Theme.of(context).canvasColor),
+      ),
       body: Container(
         alignment: Alignment.center,
         padding: const EdgeInsets.all(32),

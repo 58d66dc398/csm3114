@@ -167,6 +167,7 @@ class _SchedulePageState extends State<SchedulePage> {
 
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: getNavOverlay(Theme.of(context).canvasColor),
         title: Text((add) ? 'Add Schedule' : 'Schedule Info'),
         actions: [
           if (!add)

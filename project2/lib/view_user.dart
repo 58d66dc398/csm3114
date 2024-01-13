@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:haulier/util.dart';
 import 'package:haulier/view_login.dart';
 
 import 'data.dart';
@@ -39,6 +40,7 @@ class _UserPageState extends State<UserPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        systemOverlayStyle: getNavOverlay(Theme.of(context).canvasColor),
         title: const Text('User'),
         centerTitle: true,
       ),

@@ -11,10 +11,10 @@ class TaskApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       title: 'To Do',
-      darkTheme: ThemeData.dark(),
-      home: const LoginPage(),
+      // darkTheme: ThemeData.dark(),
+      home: LoginPage(),
     );
   }
 }
